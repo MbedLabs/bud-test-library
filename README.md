@@ -7,9 +7,9 @@ Test automation framework for embedded systems testing.
 `budtestlibrary` provides a comprehensive test framework for hardware-in-loop (HIL) and functional component testing (FCT) of embedded systems. It offers:
 
 - **BudTestCase**: Base class for test cases with lifecycle management, rich assertions, and logging
-- **RequirementMetadata**: Link tests to OpenProject/Jira for requirement traceability
+- **RequirementMetadata**: Link tests to Bloom ALM/Jira for requirement traceability
 - **FlashEvent**: Standardized firmware flashing abstraction
-- **OpenProjectSync**: Automatic synchronization of test cases to OpenProject Work Packages
+- **BloomSync**: Automatic synchronization of test cases to Bloom ALM
 
 ## Installation
 
@@ -33,8 +33,8 @@ import logging
 from budtestlibrary import BudTestCase, RequirementMetadata
 
 class MyBMSTest(BudTestCase):
-    # Link to OpenProject Work Package
-    requirement_metadata = RequirementMetadata("bms-project", "WP-1234")
+    # Link to Bloom ALM requirement
+    requirement_metadata = RequirementMetadata("bms-project", "REQ-1234")
     
     def setUpClass(self):
         # Initialize test resources
@@ -85,8 +85,10 @@ Configure via environment variables or `app.properties`:
 ```bash
 export BUD_BACKEND_URL="https://bud.embedlabs.de/"
 export BUD_TOKEN="your-api-token"
-export PM_URL="https://pm.embedlabs.de/"
-export PM_TOKEN="your-openproject-token"
+export BLOOM_URL="https://bloom.embedlabs.de/"
+export BLOOM_TOKEN="your-bloom-jwt-token"
+export BLOOM_EMAIL="user@embedlabs.de"
+export BLOOM_PASSWORD="your-password"
 ```
 
 ### app.properties
@@ -94,8 +96,9 @@ export PM_TOKEN="your-openproject-token"
 ```properties
 budBackend=https://bud.embedlabs.de/
 budToken=your-api-token
-pmUrl=https://pm.embedlabs.de/
-pmToken=your-openproject-token
+bloomUrl=https://bloom.embedlabs.de/
+bloomToken=your-bloom-jwt-token
+bloomEmail=user@embedlabs.de
 budRunnerAccount=my-runner
 budRunnerToken=runner-token
 runnerSocketPort=53035
@@ -135,27 +138,27 @@ self.assertInRange(
 )
 ```
 
-## OpenProject Integration
+## Bloom ALM Integration
 
-Sync test cases to OpenProject Work Packages:
+Sync test cases to Bloom ALM:
 
 ```python
-from budtestlibrary import OpenProjectSync
+from budtestlibrary import BloomSync
 
-sync = OpenProjectSync()
+sync = BloomSync()
 
 # Sync a test suite
 sync.sync_test_suite(
-    project_id="bms-project",
-    suite_name="HIL Tests",
+    project_identifier="bms-project",
+    campaign_name="HIL Tests",
     test_classes=[MyBMSTest, AnotherTest],
 )
 
 # Update result after test run
 sync.update_test_result(
-    work_package_id=1234,
+    campaign_id=1,
+    test_case_id=42,
     passed=True,
-    run_url="https://bud.embedlabs.de/runs/567",
 )
 ```
 

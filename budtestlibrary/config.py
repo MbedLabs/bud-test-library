@@ -10,8 +10,10 @@ Environment variables:
     BUD_BACKEND_URL - Backend API URL (default: https://bud.embedlabs.de/)
     BUD_FRONTEND_URL - Frontend URL (default: https://bud.embedlabs.de/)
     BUD_TOKEN - Authentication token for the backend
-    PM_URL - Project management URL (default: https://pm.embedlabs.de/)
-    PM_TOKEN - OpenProject API token
+    BLOOM_URL - Bloom ALM URL (default: https://bloom.embedlabs.de/)
+    BLOOM_TOKEN - Bloom ALM JWT token
+    BLOOM_EMAIL - Bloom ALM login email
+    BLOOM_PASSWORD - Bloom ALM login password
     BUD_RUNNER_ACCOUNT - Runner account name
     BUD_RUNNER_TOKEN - Runner authentication token
     BUD_RUNNER_SOCKET_PORT - Socket port for runner communication
@@ -35,7 +37,7 @@ class BudConfig:
     Usage:
         config = BudConfig()
         print(config.backend_url)
-        print(config.pm_url)
+        print(config.bloom_url)
         
         # With custom properties file
         config = BudConfig(properties_file="/path/to/app.properties")
@@ -46,9 +48,11 @@ class BudConfig:
     frontend_url: str = "https://bud.embedlabs.de/"
     bud_token: Optional[str] = None
     
-    # Project management configuration
-    pm_url: str = "https://pm.embedlabs.de/"
-    pm_token: Optional[str] = None
+    # Bloom ALM configuration
+    bloom_url: str = "https://bloom.embedlabs.de/"
+    bloom_token: Optional[str] = None
+    bloom_email: Optional[str] = None
+    bloom_password: Optional[str] = None
     
     # Runner configuration
     runner_account: Optional[str] = None
@@ -111,8 +115,10 @@ class BudConfig:
                 "budBackend": ("backend_url", str),
                 "budFrontend": ("frontend_url", str),
                 "budToken": ("bud_token", str),
-                "pmUrl": ("pm_url", str),
-                "pmToken": ("pm_token", str),
+                "bloomUrl": ("bloom_url", str),
+                "bloomToken": ("bloom_token", str),
+                "bloomEmail": ("bloom_email", str),
+                "bloomPassword": ("bloom_password", str),
                 "budRunnerAccount": ("runner_account", str),
                 "budRunnerToken": ("runner_token", str),
                 "runnerSocketPort": ("runner_socket_port", int),
@@ -148,8 +154,10 @@ class BudConfig:
             "BUD_BACKEND_URL": ("backend_url", str),
             "BUD_FRONTEND_URL": ("frontend_url", str),
             "BUD_TOKEN": ("bud_token", str),
-            "PM_URL": ("pm_url", str),
-            "PM_TOKEN": ("pm_token", str),
+            "BLOOM_URL": ("bloom_url", str),
+            "BLOOM_TOKEN": ("bloom_token", str),
+            "BLOOM_EMAIL": ("bloom_email", str),
+            "BLOOM_PASSWORD": ("bloom_password", str),
             "BUD_RUNNER_ACCOUNT": ("runner_account", str),
             "BUD_RUNNER_TOKEN": ("runner_token", str),
             "BUD_RUNNER_SOCKET_PORT": ("runner_socket_port", int),
@@ -175,7 +183,7 @@ class BudConfig:
         return {
             "backend_url": self.backend_url,
             "frontend_url": self.frontend_url,
-            "pm_url": self.pm_url,
+            "bloom_url": self.bloom_url,
             "runner_account": self.runner_account,
             "runner_socket_port": self.runner_socket_port,
             "runner_timeout": self.runner_timeout,

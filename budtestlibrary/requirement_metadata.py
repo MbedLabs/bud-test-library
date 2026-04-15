@@ -2,12 +2,12 @@
 RequirementMetadata - Links test cases to requirement management systems.
 
 Supports:
-- OpenProject (pm.embedlabs.de) - Work Packages
+- Bloom ALM (bloom.embedlabs.de) - Requirements
 - Jira (planned) - Issues/Epics
 
 Usage:
     class MyTest(BudTestCase):
-        requirement_metadata = RequirementMetadata("BMS_Project", "WP-1234")
+        requirement_metadata = RequirementMetadata("BMS_Project", "REQ-1234")
 """
 
 from dataclasses import dataclass
@@ -17,7 +17,7 @@ from enum import Enum
 
 class RequirementSystem(Enum):
     """Supported requirement management systems."""
-    OPENPROJECT = "openproject"
+    BLOOM = "bloom"
     JIRA = "jira"
 
 
@@ -26,9 +26,9 @@ class RequirementMetadata:
     """
     Metadata linking a test case to a requirement in a management system.
     
-    For OpenProject:
-        - project: Project identifier (e.g., "bms-project")
-        - work_package_id: Work Package ID (e.g., "WP-1234" or "1234")
+    For Bloom ALM:
+        - project: Project prefix or identifier (e.g., "bms-project")
+        - work_package_id: Requirement ID (e.g., "REQ-1234" or "1234")
     
     For Jira (planned):
         - project: Project key (e.g., "BMS")
@@ -36,7 +36,7 @@ class RequirementMetadata:
     
     Attributes:
         project: Project identifier in the requirement system.
-        work_package_id: Work Package / Issue identifier.
+        work_package_id: Requirement / Issue identifier.
         system: The requirement management system type.
         description: Optional description of the requirement link.
         url: Optional direct URL to the requirement.
@@ -44,25 +44,24 @@ class RequirementMetadata:
     
     project: str
     work_package_id: str
-    system: RequirementSystem = RequirementSystem.OPENPROJECT
+    system: RequirementSystem = RequirementSystem.BLOOM
     description: Optional[str] = None
     url: Optional[str] = None
 
     def __post_init__(self):
-        """Validate and normalize the work package ID."""
-        # Remove 'WP-' prefix if present for OpenProject
-        if self.system == RequirementSystem.OPENPROJECT:
-            if self.work_package_id.upper().startswith("WP-"):
-                self.work_package_id = self.work_package_id[3:]
+        """Validate and normalize the requirement ID."""
+        if self.system == RequirementSystem.BLOOM:
+            if self.work_package_id.upper().startswith("REQ-"):
+                self.work_package_id = self.work_package_id[4:]
 
     def get_work_package_id(self) -> str:
-        """Get the numeric/string Work Package ID."""
+        """Get the numeric/string requirement ID."""
         return self.work_package_id
 
     def get_display_id(self) -> str:
         """Get a display-friendly ID with prefix."""
-        if self.system == RequirementSystem.OPENPROJECT:
-            return f"WP-{self.work_package_id}"
+        if self.system == RequirementSystem.BLOOM:
+            return f"REQ-{self.work_package_id}"
         elif self.system == RequirementSystem.JIRA:
             return f"{self.project}-{self.work_package_id}"
         return self.work_package_id
@@ -73,17 +72,17 @@ class RequirementMetadata:
         
         Args:
             base_url: Base URL of the requirement system.
-                      Defaults to pm.embedlabs.de for OpenProject.
+                      Defaults to bloom.embedlabs.de for Bloom.
         
         Returns:
-            Full URL to the work package/issue.
+            Full URL to the requirement/issue.
         """
         if self.url:
             return self.url
 
-        if self.system == RequirementSystem.OPENPROJECT:
-            base = base_url or "https://pm.embedlabs.de"
-            return f"{base}/projects/{self.project}/work_packages/{self.work_package_id}"
+        if self.system == RequirementSystem.BLOOM:
+            base = base_url or "https://bloom.embedlabs.de"
+            return f"{base}/projects/{self.project}/requirements/{self.work_package_id}"
         elif self.system == RequirementSystem.JIRA:
             base = base_url or "https://jira.atlassian.com"
             return f"{base}/browse/{self.project}-{self.work_package_id}"
@@ -104,7 +103,7 @@ class RequirementMetadata:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RequirementMetadata":
         """Create from dictionary."""
-        system = RequirementSystem(data.get("system", "openproject"))
+        system = RequirementSystem(data.get("system", "bloom"))
         return cls(
             project=data["project"],
             work_package_id=data["work_package_id"],
