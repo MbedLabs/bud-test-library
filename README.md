@@ -13,17 +13,11 @@ Test automation framework for embedded systems testing.
 
 ## Installation
 
-### From GitHub (submodule)
+To use `budtestlibrary` in your projects, add it as a submodule:
 
 ```bash
-git submodule add https://github.com/embedlabs/budtestlibrary.git
-pip install -e ./budtestlibrary
-```
-
-### From pip.embedlabs.de (coming soon)
-
-```bash
-pip install budtestlibrary --index-url https://pip.embedlabs.de/simple
+git submodule add https://github.com/MbedLabs/bud-test-library.git
+pip install -e ./bud-test-library
 ```
 
 ## Quick Start
@@ -83,24 +77,20 @@ Configure via environment variables or `app.properties`:
 ### Environment Variables
 
 ```bash
-export BUD_BACKEND_URL="https://bud.embedlabs.de/"
+export BUD_BACKEND_URL="https://<your-bud-instance-url>/"
 export BUD_TOKEN="your-api-token"
-export BLOOM_URL="https://bloom.embedlabs.de/"
+export BLOOM_URL="https://<your-bloom-instance-url>/"
 export BLOOM_TOKEN="your-bloom-jwt-token"
-export BLOOM_EMAIL="user@embedlabs.de"
+export BLOOM_EMAIL="user@<your-domain>.de"
 export BLOOM_PASSWORD="your-password"
 ```
 
 ### app.properties
 
 ```properties
-budBackend=https://bud.embedlabs.de/
-budToken=your-api-token
-bloomUrl=https://bloom.embedlabs.de/
-bloomToken=your-bloom-jwt-token
-bloomEmail=user@embedlabs.de
+budBackend=https://<your-bud-instance-url>/
+bloomUrl=https://<your-bloom-instance-url>/
 budRunnerAccount=my-runner
-budRunnerToken=runner-token
 runnerSocketPort=53035
 ```
 

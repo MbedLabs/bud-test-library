@@ -44,12 +44,12 @@ class BudConfig:
     """
     
     # Backend configuration
-    backend_url: str = "https://bud.embedlabs.de/"
-    frontend_url: str = "https://bud.embedlabs.de/"
+    backend_url: str = ""
+    frontend_url: str = ""
     bud_token: Optional[str] = None
     
     # Bloom ALM configuration
-    bloom_url: str = "https://bloom.embedlabs.de/"
+    bloom_url: str = ""
     bloom_token: Optional[str] = None
     bloom_email: Optional[str] = None
     bloom_password: Optional[str] = None

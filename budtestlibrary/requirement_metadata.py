@@ -81,8 +81,10 @@ class RequirementMetadata:
             return self.url
 
         if self.system == RequirementSystem.BLOOM:
-            base = base_url or "https://bloom.embedlabs.de"
-            return f"{base}/projects/{self.project}/requirements/{self.work_package_id}"
+            base = base_url or ""
+            if not base:
+                return f"projects/{self.project}/requirements/{self.work_package_id}"
+            return f"{base.rstrip('/')}/projects/{self.project}/requirements/{self.work_package_id}"
         elif self.system == RequirementSystem.JIRA:
             base = base_url or "https://jira.atlassian.com"
             return f"{base}/browse/{self.project}-{self.work_package_id}"
