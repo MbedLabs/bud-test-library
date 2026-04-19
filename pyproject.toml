@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "budtestlibrary"
-version = "0.1.0"
+version = "0.1.2"
 description = "Test automation framework for embedded systems testing"
 readme = "README.md"
 license = {text = "AGPL-3.0-or-later"}
@@ -57,11 +57,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://bud.embedlabs.de"
-Documentation = "https://bud.embedlabs.de/docs"
-Repository = "https://github.com/embedlabs/budtestlibrary"
-Issues = "https://github.com/embedlabs/budtestlibrary/issues"
-Changelog = "https://github.com/embedlabs/budtestlibrary/blob/main/CHANGELOG.md"
+Homepage = "https://embedlabs.de"
+Documentation = "https://embedlabs.de/docs"
+Repository = "https://github.com/MbedLabs/bud-test-library"
+Issues = "https://github.com/MbedLabs/bud-test-library/issues"
+Changelog = "https://github.com/MbedLabs/bud-test-library/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
