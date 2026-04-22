@@ -10,10 +10,10 @@ Environment variables:
     BUD_BACKEND_URL - Backend API URL (default: https://bud.embedlabs.de/)
     BUD_FRONTEND_URL - Frontend URL (default: https://bud.embedlabs.de/)
     BUD_TOKEN - Authentication token for the backend
-    BLOOM_URL - Bloom ALM URL (default: https://bloom.embedlabs.de/)
-    BLOOM_TOKEN - Bloom ALM JWT token
-    BLOOM_EMAIL - Bloom ALM login email
-    BLOOM_PASSWORD - Bloom ALM login password
+    BLOOM_URL - Bloom PLM URL (default: https://bloom.embedlabs.de/)
+    BLOOM_TOKEN - Bloom PLM JWT token
+    BLOOM_EMAIL - Bloom PLM login email
+    BLOOM_PASSWORD - Bloom PLM login password
     BUD_RUNNER_ACCOUNT - Runner account name
     BUD_RUNNER_TOKEN - Runner authentication token
     BUD_RUNNER_SOCKET_PORT - Socket port for runner communication
@@ -48,7 +48,7 @@ class BudConfig:
     frontend_url: str = ""
     bud_token: Optional[str] = None
     
-    # Bloom ALM configuration
+    # Bloom PLM configuration
     bloom_url: str = ""
     bloom_token: Optional[str] = None
     bloom_email: Optional[str] = None
