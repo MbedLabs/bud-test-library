@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "budtestlibrary"
-version = "0.1.2"
-description = "Test automation framework for embedded systems testing"
+version = "0.1.3"
+description = "Universal Bud Test Automation Framework for Hardware-in-Loop, Software-in-the-Loop, Web-Apps, Mobile, Cloud, and End-to-End Testing. Created by EmbedLabs."
 readme = "README.md"
 license = {text = "AGPL-3.0-or-later"}
 authors = [
@@ -17,16 +17,30 @@ maintainers = [
 keywords = [
     "testing",
     "automation",
-    "embedded",
-    "bms",
     "hardware-in-loop",
-    "hil",
-    "test-framework",
+    "software-in-the-loop",
+    "IoT-Edge-Testing",
+    "Web-Apps-Testing",
+    "Mobile-Testing",
+    "Cloud-Testing",
+    "API-Testing",
+    "System-Testing",
+    "Security-Testing",
+    "Performance-Testing",
+    "Load-Testing",
+    "Distributed-Systems-Testing",
+    "SaaS-Validation",
+    "CI-CD-Integration",
+    "End-to-End Testing",
+    "Bud",
+    "Test-Framework",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -121,8 +135,8 @@ minversion = "7.0"
 addopts = "-ra -q --cov=budtestlibrary --cov-report=term-missing"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
+python_classes = ["*Test"]
+python_functions = ["bud_*"]
 
 [tool.coverage.run]
 source = ["budtestlibrary"]
