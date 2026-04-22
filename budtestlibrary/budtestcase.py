@@ -96,7 +96,7 @@ class BudTestCase(ABC):
     """
 
     # Class attribute for requirement metadata (set in subclasses)
-    requirement_metadata = None
+    bloom_metadata = None
 
     def __init__(self):
         """Initialize the test case."""
@@ -565,9 +565,9 @@ class BudTestCase(ABC):
 
         return {
             "test_case": self.__class__.__name__,
-            "requirement_metadata": (
-                self.requirement_metadata.to_dict()
-                if self.requirement_metadata
+            "bloom_metadata": (
+                self.bloom_metadata.to_dict()
+                if self.bloom_metadata
                 else None
             ),
             "start_time": self._start_time.isoformat() if self._start_time else None,
