@@ -7,9 +7,9 @@ Test automation framework for embedded systems testing.
 `budtestlibrary` provides a comprehensive test framework for hardware-in-loop (HIL) and functional component testing (FCT) of embedded systems. It offers:
 
 - **BudTestCase**: Base class for test cases with lifecycle management, rich assertions, and logging
-- **RequirementMetadata**: Link tests to Bloom ALM/Jira for requirement traceability
+- **RequirementMetadata**: Link tests to Bloom PLM/Jira for requirement traceability
 - **FlashEvent**: Standardized firmware flashing abstraction
-- **BloomSync**: Automatic synchronization of test cases to Bloom ALM
+- **BloomSync**: Automatic synchronization of test cases to Bloom PLM
 
 ## Installation
 
@@ -27,7 +27,7 @@ import logging
 from budtestlibrary import BudTestCase, RequirementMetadata
 
 class MyBMSTest(BudTestCase):
-    # Link to Bloom ALM requirement
+    # Link to Bloom PLM requirement
     requirement_metadata = RequirementMetadata("bms-project", "REQ-1234")
     
     def setUpClass(self):
@@ -128,9 +128,9 @@ self.assertInRange(
 )
 ```
 
-## Bloom ALM Integration
+## Bloom PLM Integration
 
-Sync test cases to Bloom ALM:
+Sync test cases to Bloom PLM:
 
 ```python
 from budtestlibrary import BloomSync

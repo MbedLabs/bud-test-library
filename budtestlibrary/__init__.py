@@ -7,8 +7,8 @@ A comprehensive test framework providing:
 - FlashEvent: Firmware flashing abstraction with success/failure handling
 - BloomSync: Automatic test case synchronization to Bloom PLM
 
-Backend: Bud Test Platform
-ALM/PLM: Bloom PLM
+Backend: Bud TMP
+PLM/PLM: Bloom PLM
 
 Copyright (c) 2026 EmbedLabs
 """
@@ -25,7 +25,7 @@ def _get_version():
                     return line.split("=")[1].strip().strip('"')
     except Exception:
         pass
-    return "0.1.3"
+    return "0.1.4"
 
 __version__ = _get_version()
 __author__ = "EmbedLabs"

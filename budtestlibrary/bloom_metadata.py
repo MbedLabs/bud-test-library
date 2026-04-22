@@ -1,5 +1,5 @@
 """
-BloomMetadata - Direct linkage to Bloom ALM Test Cases (*-TC-*).
+BloomMetadata - Direct linkage to Bloom PLM Test Cases (*-TC-*).
 """
 
 from dataclasses import dataclass
@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 @dataclass
 class BloomMetaData:
     """
-    Metadata linking a test class to a Test Case in Bloom ALM.
+    Metadata linking a test class to a Test Case in Bloom PLM.
     Standard Format: {Project}-TC-{ID}
     """
     project: str

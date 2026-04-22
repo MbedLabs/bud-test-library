@@ -1,5 +1,5 @@
 """
-BloomSync - Synchronize test cases to Bloom ALM.
+BloomSync - Synchronize test cases to Bloom PLM.
 
 Creates and updates test cases and campaigns in Bloom (bloom.embedlabs.de)
 to track test case definitions and execution results.
@@ -17,7 +17,7 @@ Usage:
     # Sync a test class
     sync.sync_test_case(
         project_identifier="bms-project",
-        campaign_name="HIL Tests",
+        campaign_name="XYZ Tests",
         test_class=MyTestClass,
     )
 
@@ -84,7 +84,7 @@ class BloomCampaignInfo:
 
 class BloomSync:
     """
-    Synchronizes test cases with Bloom ALM.
+    Synchronizes test cases with Bloom PLM.
 
     Manages the creation and updating of test cases and campaigns,
     including execution result tracking via campaign items.
