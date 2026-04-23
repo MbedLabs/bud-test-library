@@ -53,6 +53,7 @@ class TestMethodResult:
     duration_seconds: float = 0.0
     error_message: Optional[str] = None
     traceback: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to dictionary for JSON serialization."""
@@ -63,6 +64,7 @@ class TestMethodResult:
             "duration_seconds": self.duration_seconds,
             "error_message": self.error_message,
             "traceback": self.traceback,
+            "metadata": self.metadata,
         }
 
 
@@ -253,6 +255,9 @@ class BudTestCase(ABC):
             error_message=error_msg,
             traceback=tb,
         )
+
+        if self.bloom_metadata and hasattr(self.bloom_metadata, "get_full_tc_id"):
+            result.metadata["tc_id"] = self.bloom_metadata.get_full_tc_id()
 
         status = "✓ PASSED" if passed else "✗ FAILED"
         self.log_info(f"{status} ({duration:.2f}s)")
