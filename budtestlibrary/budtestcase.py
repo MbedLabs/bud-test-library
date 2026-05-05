@@ -273,6 +273,7 @@ class BudTestCase(ABC):
         expected: Any = None,
         actual: Any = None,
         abort_on_fail: bool = False,
+        assertion_type: str = "Assert",
         **kwargs
     ) -> bool:
         """
@@ -284,6 +285,7 @@ class BudTestCase(ABC):
             expected: Expected value (for reporting).
             actual: Actual value (for reporting).
             abort_on_fail: If True, raise AssertionError on failure.
+            assertion_type: The type of assertion for logging.
             **kwargs: Additional metadata for reporting (e.g., cell=, tolerance=).
         
         Returns:
@@ -298,12 +300,17 @@ class BudTestCase(ABC):
         )
         self._current_assertions.append(result)
 
+        status = "PASSED" if condition else "FAILED"
+        details = ""
+        if expected is not None or actual is not None:
+            details = f" (Expected: {expected}, Actual: {actual})"
+        
+        log_line = f"[{assertion_type}] {msg}{details} - {status}"
+
         if condition:
-            self._logger.debug(f"✓ {msg}")
+            self._logger.info(f"✓ {log_line}")
         else:
-            self._logger.warning(f"✗ ASSERTION FAILED: {msg}")
-            if expected is not None or actual is not None:
-                self._logger.warning(f"  Expected: {expected}, Actual: {actual}")
+            self._logger.warning(f"✗ {log_line}")
             if abort_on_fail:
                 raise AssertionError(msg)
 
@@ -331,14 +338,47 @@ class BudTestCase(ABC):
             bool: True if values are equal.
         """
         condition = actual == expected
-        full_msg = f"{msg} (expected={expected}, actual={actual})" if msg else f"Expected {expected}, got {actual}"
         
         return self.assertTrue(
             condition,
-            msg=full_msg,
+            msg=msg,
             expected=expected,
             actual=actual,
             abort_on_fail=abort_on_fail,
+            assertion_type="AssertEqual",
+            **kwargs
+        )
+
+    def assertIn(
+        self,
+        actual: Any,
+        expected: Any,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs
+    ) -> bool:
+        """
+        Assert that a value is in a list of expected values.
+        
+        Args:
+            actual: The actual value.
+            expected: List of expected values.
+            msg: Message describing the assertion.
+            abort_on_fail: If True, raise AssertionError on failure.
+            **kwargs: Additional metadata for reporting.
+        
+        Returns:
+            bool: True if value is in the list.
+        """
+        condition = actual in expected
+        
+        return self.assertTrue(
+            condition,
+            msg=msg,
+            expected=expected,
+            actual=actual,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertIn",
             **kwargs
         )
 
@@ -386,19 +426,17 @@ class BudTestCase(ABC):
         if relative_tolerance is not None:
             tolerance_str += f" ({relative_tolerance * 100:.1f}%)"
 
-        full_msg = f"{msg} " if msg else ""
-        full_msg += f"(expected={expected}{tolerance_str}, actual={actual})"
-
         kwargs["tolerance"] = tolerance_str
         kwargs["lower_bound"] = lower_bound
         kwargs["upper_bound"] = upper_bound
 
         return self.assertTrue(
             condition,
-            msg=full_msg,
+            msg=msg,
             expected=f"{expected}{tolerance_str}",
             actual=actual,
             abort_on_fail=abort_on_fail,
+            assertion_type="AssertInTolerance",
             **kwargs
         )
 
@@ -438,9 +476,6 @@ class BudTestCase(ABC):
             condition = lower_bound < actual < upper_bound
             range_str = f"({lower_bound}, {upper_bound})"
 
-        full_msg = f"{msg} " if msg else ""
-        full_msg += f"(expected in {range_str}, actual={actual})"
-
         kwargs["lower_bound"] = lower_bound
         kwargs["upper_bound"] = upper_bound
         kwargs["include_bounds"] = include_bounds
@@ -451,10 +486,11 @@ class BudTestCase(ABC):
 
         return self.assertTrue(
             condition,
-            msg=full_msg,
+            msg=msg,
             expected=range_str,
             actual=actual,
             abort_on_fail=abort_on_fail,
+            assertion_type="AssertInRange",
             **kwargs
         )
 
