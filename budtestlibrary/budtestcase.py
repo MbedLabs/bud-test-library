@@ -18,6 +18,7 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Callable
 from datetime import datetime
+from pathlib import Path
 
 from budtestlibrary.config import BudConfig
 
@@ -25,10 +26,18 @@ from budtestlibrary.config import BudConfig
 @dataclass
 class TestResult:
     """Represents the result of a single test assertion or test method."""
+
     passed: bool
     message: str
+    assertion_type: str = "Assert"
     expected: Any = None
     actual: Any = None
+    result: Any = None
+    source_file: Optional[str] = None
+    source_line: Optional[int] = None
+    source_function: Optional[str] = None
+    code_context: Optional[str] = None
+    traceback: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -37,8 +46,15 @@ class TestResult:
         return {
             "passed": self.passed,
             "message": self.message,
+            "assertion_type": self.assertion_type,
             "expected": str(self.expected) if self.expected is not None else None,
             "actual": str(self.actual) if self.actual is not None else None,
+            "result": str(self.result) if self.result is not None else None,
+            "source_file": self.source_file,
+            "source_line": self.source_line,
+            "source_function": self.source_function,
+            "code_context": self.code_context,
+            "traceback": self.traceback,
             "timestamp": self.timestamp.isoformat(),
             "metadata": self.metadata,
         }
@@ -47,6 +63,7 @@ class TestResult:
 @dataclass
 class TestMethodResult:
     """Represents the result of a complete test method execution."""
+
     method_name: str
     passed: bool
     assertions: List[TestResult] = field(default_factory=list)
@@ -70,27 +87,28 @@ class TestMethodResult:
 
 class AssertionError(Exception):
     """Raised when an assertion fails with abort_on_fail=True."""
+
     pass
 
 
 class BudTestCase(ABC):
     """
     Base class for all test cases in the bud test framework.
-    
+
     Usage:
         class MyTest(BudTestCase):
             def setUpClass(self):
                 # Initialize test resources
                 pass
-            
+
             def bud_my_test_method(self):
                 # Test implementation
                 self.assertTrue(condition, msg="Check condition")
-            
+
             def tearDownClass(self):
                 # Cleanup resources
                 pass
-        
+
         if __name__ == "__main__":
             test = MyTest()
             test.set_loglevel(logging.INFO)
@@ -130,10 +148,10 @@ class BudTestCase(ABC):
     def run(self) -> bool:
         """
         Execute the test case.
-        
+
         Discovers all test methods (bud_* pattern), runs them in order,
         and collects results.
-        
+
         Returns:
             bool: True if all tests passed, False otherwise.
         """
@@ -191,10 +209,10 @@ class BudTestCase(ABC):
     def _discover_test_methods(self) -> List[tuple]:
         """
         Discover all test methods in the class.
-        
+
         Test methods must start with 'bud_' prefix (for compatibility with
         existing test suites).
-        
+
         Returns:
             List of (method_name, method) tuples.
         """
@@ -209,11 +227,11 @@ class BudTestCase(ABC):
     def _run_test_method(self, method_name: str, method: Callable) -> TestMethodResult:
         """
         Run a single test method and collect results.
-        
+
         Args:
             method_name: Name of the test method.
             method: The method to execute.
-        
+
         Returns:
             TestMethodResult with execution details.
         """
@@ -256,6 +274,13 @@ class BudTestCase(ABC):
             traceback=tb,
         )
 
+        source_file = inspect.getsourcefile(self.__class__)
+        if source_file:
+            result.metadata["test_case_file"] = source_file
+        result.metadata["test_case_class"] = self.__class__.__name__
+        result.metadata["test_case_name"] = self.__class__.__name__
+        result.metadata["test_method"] = method_name
+
         if self.bloom_metadata and hasattr(self.bloom_metadata, "get_full_tc_id"):
             result.metadata["tc_id"] = self.bloom_metadata.get_full_tc_id()
 
@@ -274,11 +299,11 @@ class BudTestCase(ABC):
         actual: Any = None,
         abort_on_fail: bool = False,
         assertion_type: str = "Assert",
-        **kwargs
+        **kwargs,
     ) -> bool:
         """
         Assert that a condition is True.
-        
+
         Args:
             condition: The condition to check.
             msg: Message describing the assertion.
@@ -287,15 +312,23 @@ class BudTestCase(ABC):
             abort_on_fail: If True, raise AssertionError on failure.
             assertion_type: The type of assertion for logging.
             **kwargs: Additional metadata for reporting (e.g., cell=, tolerance=).
-        
+
         Returns:
             bool: The condition value.
         """
+        callsite = self._get_assertion_callsite()
         result = TestResult(
             passed=bool(condition),
             message=msg,
+            assertion_type=assertion_type,
             expected=expected if expected is not None else True,
             actual=actual if actual is not None else condition,
+            result=actual if actual is not None else condition,
+            source_file=callsite.get("source_file"),
+            source_line=callsite.get("source_line"),
+            source_function=callsite.get("source_function"),
+            code_context=callsite.get("code_context"),
+            traceback=callsite.get("traceback"),
             metadata=kwargs,
         )
         self._current_assertions.append(result)
@@ -304,7 +337,7 @@ class BudTestCase(ABC):
         details = ""
         if expected is not None or actual is not None:
             details = f" (Expected: {expected}, Actual: {actual})"
-        
+
         log_line = f"[{assertion_type}] {msg}{details} - {status}"
 
         if condition:
@@ -316,29 +349,56 @@ class BudTestCase(ABC):
 
         return condition
 
+    def _get_assertion_callsite(self) -> Dict[str, Any]:
+        """Return the user-code location that invoked a Bud assertion."""
+        library_file = Path(__file__).resolve()
+        stack = inspect.stack(context=3)
+        selected = stack[2] if len(stack) > 2 else stack[-1]
+
+        for frame in stack[1:]:
+            try:
+                frame_file = Path(frame.filename).resolve()
+            except OSError:
+                frame_file = Path(frame.filename)
+            if frame_file != library_file:
+                selected = frame
+                break
+
+        code_context = None
+        if selected.code_context:
+            code_context = "".join(selected.code_context).strip()
+
+        return {
+            "source_file": selected.filename,
+            "source_line": selected.lineno,
+            "source_function": selected.function,
+            "code_context": code_context,
+            "traceback": "".join(traceback.format_stack()),
+        }
+
     def assertEqual(
         self,
         actual: Any,
         expected: Any,
         msg: str = "",
         abort_on_fail: bool = False,
-        **kwargs
+        **kwargs,
     ) -> bool:
         """
         Assert that two values are equal.
-        
+
         Args:
             actual: The actual value.
             expected: The expected value.
             msg: Message describing the assertion.
             abort_on_fail: If True, raise AssertionError on failure.
             **kwargs: Additional metadata for reporting.
-        
+
         Returns:
             bool: True if values are equal.
         """
         condition = actual == expected
-        
+
         return self.assertTrue(
             condition,
             msg=msg,
@@ -346,7 +406,7 @@ class BudTestCase(ABC):
             actual=actual,
             abort_on_fail=abort_on_fail,
             assertion_type="AssertEqual",
-            **kwargs
+            **kwargs,
         )
 
     def assertIn(
@@ -355,23 +415,23 @@ class BudTestCase(ABC):
         expected: Any,
         msg: str = "",
         abort_on_fail: bool = False,
-        **kwargs
+        **kwargs,
     ) -> bool:
         """
         Assert that a value is in a list of expected values.
-        
+
         Args:
             actual: The actual value.
             expected: List of expected values.
             msg: Message describing the assertion.
             abort_on_fail: If True, raise AssertionError on failure.
             **kwargs: Additional metadata for reporting.
-        
+
         Returns:
             bool: True if value is in the list.
         """
         condition = actual in expected
-        
+
         return self.assertTrue(
             condition,
             msg=msg,
@@ -379,7 +439,7 @@ class BudTestCase(ABC):
             actual=actual,
             abort_on_fail=abort_on_fail,
             assertion_type="AssertIn",
-            **kwargs
+            **kwargs,
         )
 
     def assertInTolerance(
@@ -390,11 +450,11 @@ class BudTestCase(ABC):
         relative_tolerance: Optional[float] = None,
         msg: str = "",
         abort_on_fail: bool = False,
-        **kwargs
+        **kwargs,
     ) -> bool:
         """
         Assert that a value is within tolerance of an expected value.
-        
+
         Args:
             actual: The actual value.
             expected: The expected value.
@@ -403,12 +463,14 @@ class BudTestCase(ABC):
             msg: Message describing the assertion.
             abort_on_fail: If True, raise AssertionError on failure.
             **kwargs: Additional metadata for reporting (e.g., cell=, current_tolerance=).
-        
+
         Returns:
             bool: True if value is within tolerance.
         """
         if absolute_tolerance is None and relative_tolerance is None:
-            raise ValueError("Must specify either absolute_tolerance or relative_tolerance")
+            raise ValueError(
+                "Must specify either absolute_tolerance or relative_tolerance"
+            )
 
         tolerance_value = 0.0
         if absolute_tolerance is not None:
@@ -437,7 +499,7 @@ class BudTestCase(ABC):
             actual=actual,
             abort_on_fail=abort_on_fail,
             assertion_type="AssertInTolerance",
-            **kwargs
+            **kwargs,
         )
 
     def assertInRange(
@@ -450,11 +512,11 @@ class BudTestCase(ABC):
         measurement_time: Optional[float] = None,
         measurement_count: Optional[int] = None,
         abort_on_fail: bool = False,
-        **kwargs
+        **kwargs,
     ) -> bool:
         """
         Assert that a value is within a specified range.
-        
+
         Args:
             actual: The actual value.
             lower_bound: Lower bound of the range.
@@ -465,7 +527,7 @@ class BudTestCase(ABC):
             measurement_count: Optional measurement count for reporting.
             abort_on_fail: If True, raise AssertionError on failure.
             **kwargs: Additional metadata for reporting.
-        
+
         Returns:
             bool: True if value is within range.
         """
@@ -491,7 +553,7 @@ class BudTestCase(ABC):
             actual=actual,
             abort_on_fail=abort_on_fail,
             assertion_type="AssertInRange",
-            **kwargs
+            **kwargs,
         )
 
     # ==================== Logging Methods ====================
@@ -499,7 +561,7 @@ class BudTestCase(ABC):
     def log_info(self, message: str) -> None:
         """
         Log an info message.
-        
+
         Args:
             message: The message to log.
         """
@@ -508,13 +570,13 @@ class BudTestCase(ABC):
     def set_loglevel(self, level: int) -> None:
         """
         Set the logging level.
-        
+
         Args:
             level: Logging level (e.g., logging.INFO, logging.DEBUG).
         """
         self._log_level = level
         self._logger.setLevel(level)
-        
+
         # Also configure the root logger if not already configured
         if not logging.getLogger().handlers:
             logging.basicConfig(
@@ -526,7 +588,7 @@ class BudTestCase(ABC):
     def print_variables(self, variables: Dict[str, Any]) -> None:
         """
         Print/log variables for debugging and reporting.
-        
+
         Args:
             variables: Dictionary of variable names to values.
         """
@@ -538,15 +600,15 @@ class BudTestCase(ABC):
     def upload(self, file_path: str) -> bool:
         """
         Upload a file to the bud.embedlabs.de backend.
-        
+
         Args:
             file_path: Path to the file to upload.
-        
+
         Returns:
             bool: True if upload was successful.
         """
         upload_url = f"{self._config.backend_url}api/uploads"
-        
+
         try:
             headers = {}
             if self._config.bud_token:
@@ -558,7 +620,7 @@ class BudTestCase(ABC):
                     "test_case": self.__class__.__name__,
                     "timestamp": datetime.now().isoformat(),
                 }
-                
+
                 response = requests.post(
                     upload_url,
                     files=files,
@@ -593,7 +655,7 @@ class BudTestCase(ABC):
     def get_summary(self) -> Dict[str, Any]:
         """
         Get a summary of the test execution.
-        
+
         Returns:
             Dictionary with test summary information.
         """
@@ -607,9 +669,7 @@ class BudTestCase(ABC):
         return {
             "test_case": self.__class__.__name__,
             "bloom_metadata": (
-                self.bloom_metadata.to_dict()
-                if self.bloom_metadata
-                else None
+                self.bloom_metadata.to_dict() if self.bloom_metadata else None
             ),
             "start_time": self._start_time.isoformat() if self._start_time else None,
             "end_time": self._end_time.isoformat() if self._end_time else None,
@@ -631,7 +691,7 @@ class BudTestCase(ABC):
     def to_junit_xml(self) -> str:
         """
         Generate JUnit XML format for CI/CD integration.
-        
+
         Returns:
             JUnit XML string.
         """
@@ -643,7 +703,7 @@ class BudTestCase(ABC):
         testsuite.set("tests", str(len(self._results)))
         testsuite.set("failures", str(sum(1 for r in self._results if not r.passed)))
         testsuite.set("errors", "0")
-        
+
         if self._start_time and self._end_time:
             testsuite.set(
                 "time", str((self._end_time - self._start_time).total_seconds())
