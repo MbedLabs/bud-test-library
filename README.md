@@ -9,7 +9,6 @@ Universal test automation framework for HIL, SIL, Web, Mobile, Cloud, and E2E te
 - **BudTestCase**: Base class for test cases with lifecycle hooks, rich assertions, and logging
 - **BloomMetaData**: Link tests to Bloom PLM test cases for traceability
 - **FlashEvent**: Standardized firmware flashing abstraction
-- **BloomSync**: Automatic synchronization of test cases and results to Bloom PLM
 
 ## Installation
 
@@ -63,17 +62,12 @@ Configure via environment variables or `app.properties`:
 ```bash
 export BUD_BACKEND_URL="https://<your-bud-instance-url>/"
 export BUD_TOKEN="your-api-token"
-export BLOOM_URL="https://<your-bloom-instance-url>/"
-export BLOOM_TOKEN="your-bloom-jwt-token"
-export BLOOM_EMAIL="user@<your-domain>.de"
-export BLOOM_PASSWORD="your-password"
 ```
 
 ### app.properties
 
 ```properties
 budBackend=https://<your-bud-instance-url>/
-bloomUrl=https://<your-bloom-instance-url>/
 budRunnerAccount=my-runner
 runnerSocketPort=53035
 ```
@@ -109,28 +103,6 @@ self.assertInRange(
     upper_bound=10.0,
     include_bounds=True,
     msg="Description",
-)
-```
-
-## Bloom PLM Integration
-
-Sync test cases to Bloom PLM:
-
-```python
-from budtestlibrary import BloomSync
-
-sync = BloomSync()
-
-sync.sync_test_suite(
-    project_identifier="my-project",
-    campaign_name="Integration Tests",
-    test_classes=[MyTest, AnotherTest],
-)
-
-sync.update_test_result(
-    campaign_id=1,
-    test_case_id=42,
-    passed=True,
 )
 ```
 
