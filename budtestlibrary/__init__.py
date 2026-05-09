@@ -5,7 +5,6 @@ A comprehensive test framework providing:
 - BudTestCase: Base class for test cases with lifecycle management, assertions, and logging
 - BloomMetaData: Bloom PLM integration for test case traceability (*-TC-*)
 - FlashEvent: Firmware flashing abstraction with success/failure handling
-- BloomSync: Automatic test case synchronization to Bloom PLM
 
 Backend: Bud TMP
 PLM/PLM: Bloom PLM
@@ -25,7 +24,7 @@ def _get_version():
                     return line.split("=")[1].strip().strip('"')
     except Exception:
         pass
-    return "0.1.6"
+    return "0.1.7"
 
 __version__ = _get_version()
 __author__ = "EmbedLabs"
@@ -35,7 +34,6 @@ from budtestlibrary.budtestcase import BudTestCase
 from budtestlibrary.bloom_metadata import BloomMetaData
 from budtestlibrary.flash_event import FlashEvent, FlashSuccess, FlashFailure
 from budtestlibrary.config import BudConfig
-from budtestlibrary.bloom_sync import BloomSync
 
 __all__ = [
     "BudTestCase",
@@ -44,5 +42,4 @@ __all__ = [
     "FlashSuccess",
     "FlashFailure",
     "BudConfig",
-    "BloomSync",
 ]
