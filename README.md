@@ -106,6 +106,16 @@ self.assertInRange(
 )
 ```
 
+## Result and Flash Abstractions
+
+### TestMethodResult
+The result objects include detailed failure and summary messages:
+- `error_message`: Richly formatted with the exact assertion line when failed.
+- `summary_message`: Concisely summarizes the execution (e.g., "Passed: N assertion(s) in M.NNs" or mirrors `error_message` on failure).
+
+### FlashFailure
+Firmware flash results use a unified interface. `FlashFailure` defaults to a `message` key (matching `FlashSuccess`), while preserving a read-only `error_message` for backward compatibility. Its `to_dict()` keys include `message`, `error_message`, `error_code`, and `recoverable`.
+
 ## JUnit XML Output
 
 Generate JUnit XML for CI/CD integration:
