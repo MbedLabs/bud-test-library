@@ -88,13 +88,18 @@ class FlashFailure(FlashResult):
         return FlashFailure("Verification failed", error_code=0x0A)
     """
     status: FlashStatus = field(default=FlashStatus.FAILURE, init=False)
-    error_message: str = "Flash failed"
+    message: str = "Flash failed"
     error_code: Optional[int] = None
     recoverable: bool = True
 
+    @property
+    def error_message(self) -> str:
+        return self.message
+
     def to_dict(self) -> Dict[str, Any]:
         result = super().to_dict()
-        result["error_message"] = self.error_message
+        result["message"] = self.message
+        result["error_message"] = self.message
         result["error_code"] = self.error_code
         result["recoverable"] = self.recoverable
         return result
@@ -183,7 +188,7 @@ class FlashEvent(ABC):
             self._result = self.flash()
         except Exception as e:
             self._result = FlashFailure(
-                error_message=f"Unexpected error: {str(e)}",
+                message=f"Unexpected error: {str(e)}",
                 recoverable=False,
             )
         
