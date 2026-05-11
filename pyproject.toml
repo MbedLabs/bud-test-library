@@ -7,12 +7,12 @@ name = "budtestlibrary"
 version = "0.1.8"
 description = "Universal Bud Test Automation Framework for Hardware-in-Loop, Software-in-the-Loop, Web-Apps, Mobile, Cloud, and End-to-End Testing. Created by EmbedLabs."
 readme = "README.md"
-license = {text = "AGPL-3.0-or-later"}
+license = {text = "AGPL-3.0"}
 authors = [
-    {name = "EmbedLabs", email = "dev@embedlabs.de"}
+    {name = "EmbedLabs", email = "dev@embedlabs.net"}
 ]
 maintainers = [
-    {name = "EmbedLabs", email = "dev@embedlabs.de"}
+    {name = "EmbedLabs", email = "dev@embedlabs.net"}
 ]
 keywords = [
     "testing",
@@ -41,7 +41,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "License :: OSI Approved :: GNU Affero General Public License v3 (AGPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",

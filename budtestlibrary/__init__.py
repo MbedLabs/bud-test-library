@@ -28,7 +28,7 @@ def _get_version():
 
 __version__ = _get_version()
 __author__ = "EmbedLabs"
-__email__ = "dev@embedlabs.de"
+__email__ = "dev@embedlabs.net"
 
 from budtestlibrary.budtestcase import BudTestCase
 from budtestlibrary.bloom_metadata import BloomMetaData
