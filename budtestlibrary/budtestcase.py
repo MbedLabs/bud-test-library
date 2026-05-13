@@ -333,7 +333,7 @@ class BudTestCase(ABC):
         expected: Any = None,
         actual: Any = None,
         abort_on_fail: bool = False,
-        assertion_type: str = "Assert",
+        assertion_type: str = "AssertTrue",
         **kwargs,
     ) -> bool:
         callsite = self._get_assertion_callsite()
