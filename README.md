@@ -104,6 +104,13 @@ self.assertInRange(
     include_bounds=True,
     msg="Description",
 )
+
+# upper_bound is optional — checks >= lower_bound when omitted
+self.assertInRange(
+    actual,
+    lower_bound=5.0,
+    msg="Description",
+)
 ```
 
 ## Result and Flash Abstractions
@@ -116,16 +123,17 @@ The result objects include detailed failure and summary messages:
 ### FlashFailure
 Firmware flash results use a unified interface. `FlashFailure` defaults to a `message` key (matching `FlashSuccess`), while preserving a read-only `error_message` for backward compatibility. Its `to_dict()` keys include `message`, `error_message`, `error_code`, and `recoverable`.
 
-## JUnit XML Output
-
-Generate JUnit XML for CI/CD integration:
+### FlashEvent
+Flash events accept a `firmware_path` parameter in both `flash()` and `execute()` methods:
 
 ```python
-test = MyTest()
-test.run()
+class MyFlashEvent(FlashEvent):
+    def flash(self, firmware_path):
+        ...
+        return FlashSuccess()
 
-with open("report_junit.xml", "w") as f:
-    f.write(test.to_junit_xml())
+event = MyFlashEvent()
+result = event.execute("/path/to/firmware.hex")
 ```
 
 ## Related Packages

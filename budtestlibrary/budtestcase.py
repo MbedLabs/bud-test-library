@@ -402,9 +402,14 @@ class BudTestCase(ABC):
         cond = (expected - tol) <= actual <= (expected + tol)
         return self.assertTrue(cond, msg=msg, expected=f"{expected}±{tol}", actual=actual, abort_on_fail=abort_on_fail, assertion_type="AssertInTolerance", **kwargs)
 
-    def assertInRange(self, actual: float, lower_bound: float, upper_bound: float, include_bounds: bool = True, msg: str = "", abort_on_fail: bool = False, **kwargs) -> bool:
-        cond = (lower_bound <= actual <= upper_bound) if include_bounds else (lower_bound < actual < upper_bound)
-        return self.assertTrue(cond, msg=msg, expected=f"[{lower_bound}, {upper_bound}]", actual=actual, abort_on_fail=abort_on_fail, assertion_type="AssertInRange", **kwargs)
+    def assertInRange(self, actual: float, lower_bound: float, upper_bound: Optional[float] = None, include_bounds: bool = True, msg: str = "", abort_on_fail: bool = False, **kwargs) -> bool:
+        if upper_bound is not None:
+            cond = (lower_bound <= actual <= upper_bound) if include_bounds else (lower_bound < actual < upper_bound)
+            expected = f"[{lower_bound}, {upper_bound}]"
+        else:
+            cond = (actual >= lower_bound) if include_bounds else (actual > lower_bound)
+            expected = f">= {lower_bound}" if include_bounds else f"> {lower_bound}"
+        return self.assertTrue(cond, msg=msg, expected=expected, actual=actual, abort_on_fail=abort_on_fail, assertion_type="AssertInRange", **kwargs)
 
     def log_info(self, message: str) -> None:
         self._logger.info(message)
