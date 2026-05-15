@@ -6,7 +6,7 @@ functionality across different hardware platforms.
 
 Usage:
     class MyFlashEvent(FlashEvent):
-        def flash(self):
+        def flash(self, firmware_path):
             # Perform flashing
             if success:
                 return FlashSuccess()
@@ -126,7 +126,7 @@ class FlashEvent(ABC):
         self._result: Optional[FlashResult] = None
 
     @abstractmethod
-    def flash(self) -> FlashResult:
+    def flash(self, firmware_path: str) -> FlashResult:
         """
         Perform the firmware flash operation.
         
@@ -135,6 +135,9 @@ class FlashEvent(ABC):
         2. Erase the target memory (if needed)
         3. Program the firmware
         4. Verify the flash (if supported)
+        
+        Args:
+            firmware_path: Path to the firmware file to flash.
         
         Returns:
             FlashSuccess if the flash completed successfully.
@@ -172,12 +175,15 @@ class FlashEvent(ABC):
         """
         pass
 
-    def execute(self) -> FlashResult:
+    def execute(self, firmware_path: str) -> FlashResult:
         """
         Execute the flash operation with timing.
         
         This is the main entry point for running a flash.
         It wraps the flash() method with timing and error handling.
+        
+        Args:
+            firmware_path: Path to the firmware file to flash.
         
         Returns:
             FlashResult with success or failure details.
@@ -185,7 +191,7 @@ class FlashEvent(ABC):
         self._start_time = datetime.now()
         
         try:
-            self._result = self.flash()
+            self._result = self.flash(firmware_path)
         except Exception as e:
             self._result = FlashFailure(
                 message=f"Unexpected error: {str(e)}",
