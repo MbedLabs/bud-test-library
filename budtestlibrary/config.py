@@ -12,40 +12,40 @@ Environment variables:
     BUD_TOKEN - Authentication token for the backend (Required)
 """
 
-import os
 import configparser
-from pathlib import Path
-from typing import Any, Dict, Optional
+import os
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Optional
 
 
 @dataclass
 class BudConfig:
     """
     Configuration container for budtestlibrary.
-    
+
     Automatically loads from environment variables and app.properties.
     Environment variables take precedence over file configuration.
-    
+
     Usage:
         config = BudConfig()
         print(config.backend_url)
-        
+
         # With custom properties file
         config = BudConfig(properties_file="/path/to/app.properties")
     """
-    
+
     # Backend configuration
     backend_url: str = ""
     frontend_url: str = ""
     bud_token: Optional[str] = None
-    
+
     # Runner configuration
     runner_account: Optional[str] = None
     runner_token: Optional[str] = None
     runner_socket_port: int = 53035
     runner_timeout: int = -1  # -1 = unlimited
-    
+
     # GitHub/GitLab configuration
     config_project_api_url: Optional[str] = None
     config_project_repo: Optional[str] = None
@@ -53,16 +53,16 @@ class BudConfig:
     config_branch: str = "main"
     config_file: str = "bud_config.json"
     config_folder: str = "git-config"
-    
+
     # User configuration
     last_user: Optional[str] = None
     location: str = "EmbedLabs - Test Environment"
     language: str = "en"
-    
+
     # UI configuration
     full_screen: bool = False
     test_image_height: float = 500.0
-    
+
     # Internal
     _properties_file: Optional[str] = field(default=None, repr=False)
 
@@ -76,26 +76,26 @@ class BudConfig:
                 if path.exists():
                     self._load_from_properties(str(path))
                     break
-        
+
         # Environment variables override file settings
         self._load_from_env()
 
     def _load_from_properties(self, filepath: str) -> None:
         """
         Load configuration from a .properties file.
-        
+
         Uses configparser with a fake section header for Java-style properties.
         """
         try:
             # Create a fake section for configparser
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 content = "[DEFAULT]\n" + f.read()
-            
+
             config = configparser.ConfigParser()
             config.read_string(content)
-            
+
             props = config["DEFAULT"]
-            
+
             # Map properties to config attributes
             property_mapping = {
                 "budBackend": ("backend_url", str),
@@ -117,14 +117,14 @@ class BudConfig:
                 "fullScreen": ("full_screen", lambda x: x.lower() == "true"),
                 "testImageHeight": ("test_image_height", float),
             }
-            
+
             for prop_key, (attr_name, converter) in property_mapping.items():
                 if prop_key in props:
                     try:
                         setattr(self, attr_name, converter(props[prop_key]))
                     except (ValueError, TypeError):
                         pass  # Keep default if conversion fails
-                        
+
         except FileNotFoundError:
             pass  # Use defaults if file not found
         except Exception as e:
@@ -147,7 +147,7 @@ class BudConfig:
             "BUD_CONFIG_FILE": ("config_file", str),
             "BUD_LOCATION": ("location", str),
         }
-        
+
         for env_key, (attr_name, converter) in env_mapping.items():
             value = os.environ.get(env_key)
             if value is not None:
@@ -156,7 +156,7 @@ class BudConfig:
                 except (ValueError, TypeError):
                     pass  # Keep existing value if conversion fails
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary (excluding sensitive tokens)."""
         return {
             "backend_url": self.backend_url,

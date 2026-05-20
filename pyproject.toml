@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "budtestlibrary"
-version = "0.2.0"
+version = "0.2.1"
 description = "Universal Bud Test Automation Framework for Hardware-in-Loop, Software-in-the-Loop, Web-Apps, Mobile, Cloud, and End-to-End Testing. Created by EmbedLabs."
 readme = "README.md"
-license = {text = "AGPL-3.0"}
+license = "AGPL-3.0"
 authors = [
     {name = "EmbedLabs", email = "dev@embedlabs.net"}
 ]
@@ -116,18 +116,22 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 target-version = "py39"
+
+[tool.ruff.lint]
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # Pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
 ]
 ignore = [
-    "E501", # line too long (handled by black)
-    "B008", # do not perform function calls in argument defaults
+    "E501",
+    "B008",
+    "B024",
+    "B027",
 ]
 
 [tool.pytest.ini_options]
@@ -135,8 +139,8 @@ minversion = "7.0"
 addopts = "-ra -q --cov=budtestlibrary --cov-report=term-missing"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
-python_classes = ["*Test"]
-python_functions = ["bud_*"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
 [tool.coverage.run]
 source = ["budtestlibrary"]
