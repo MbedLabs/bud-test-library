@@ -7,16 +7,16 @@ Provides:
 - High-visibility multi-color console output with bold white timestamps and timezones
 """
 
-import logging
-import time
 import inspect
+import logging
+import re
+import time
 import traceback
-import requests
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Callable
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable, Optional
 
 from budtestlibrary.config import BudConfig
 
@@ -32,6 +32,16 @@ WHITE = "\033[97m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
 
+# Maximum length for serialized assertion values (shared with BudTestCase)
+_DEFAULT_MAX_RESULT_VALUE_LENGTH = 5000
+
+
+def _truncate_str(value: str, max_length: int = _DEFAULT_MAX_RESULT_VALUE_LENGTH) -> str:
+    """Truncate a string to max_length, appending a marker if truncated."""
+    if len(value) > max_length:
+        return value[:max_length] + "... <truncated>"
+    return value
+
 
 class ColoredFormatter(logging.Formatter):
     """Custom formatter to color the timestamp and suppress redundant metadata."""
@@ -44,15 +54,15 @@ class ColoredFormatter(logging.Formatter):
         # Get timestamp with timezone
         dt = datetime.fromtimestamp(record.created).astimezone()
         timestamp = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
-        
+
         # Bold White timestamp
         colored_ts = f"{BOLD}{WHITE}{timestamp}{RESET}"
-        
+
         # Always include Logger Name (Class Name)
         logger_name = record.name
-        
+
         message = record.getMessage()
-        
+
         if self.show_level:
             # Header format includes Level
             return f"{colored_ts} - {logger_name} - {record.levelname} - {message}"
@@ -78,18 +88,18 @@ class TestResult:
     code_context: Optional[str] = None
     traceback: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary for JSON serialization."""
         return {
             "passed": self.passed,
             "message": self.message,
             "skipped": self.skipped,
             "assertion_type": self.assertion_type,
-            "expected": str(self.expected) if self.expected is not None else None,
-            "actual": str(self.actual) if self.actual is not None else None,
-            "result": str(self.result) if self.result is not None else None,
+            "expected": _truncate_str(str(self.expected)) if self.expected is not None else None,
+            "actual": _truncate_str(str(self.actual)) if self.actual is not None else None,
+            "result": _truncate_str(str(self.result)) if self.result is not None else None,
             "source_file": self.source_file,
             "source_line": self.source_line,
             "source_function": self.source_function,
@@ -107,14 +117,14 @@ class TestMethodResult:
     method_name: str
     passed: bool
     skipped: bool = False
-    assertions: List[TestResult] = field(default_factory=list)
+    assertions: list[TestResult] = field(default_factory=list)
     duration_seconds: float = 0.0
     error_message: Optional[str] = None
     summary_message: str = ""
     traceback: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary for JSON serialization."""
         return {
             "method_name": self.method_name,
@@ -135,7 +145,7 @@ class AssertionError(Exception):
     pass
 
 
-class BudTestCase(ABC):
+class BudTestCase(ABC):  # noqa: B024
     """
     Base class for all test cases in the bud test framework.
     """
@@ -143,24 +153,34 @@ class BudTestCase(ABC):
     # Class attribute for metadata (set in subclasses)
     bloom_metadata = None
 
+    # Maximum length for assertion values stored in results (to avoid bloated reports)
+    MAX_RESULT_VALUE_LENGTH: int = 5000
+
+    # Whether to capture source file/line/function in assertion results
+    CAPTURE_SOURCE_PATH: bool = True
+
+    # Whether to capture tracebacks in assertion results
+    CAPTURE_TRACEBACK: bool = True
+
     def __init__(self):
         """Initialize the test case."""
         self._config = BudConfig()
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger = logging.getLogger(f"budtestlibrary.{self.__class__.__name__}")
         self._log_level = logging.INFO
-        self._results: List[TestMethodResult] = []
-        self._current_assertions: List[TestResult] = []
-        self._uploaded_files: List[str] = []
+        self._results: list[TestMethodResult] = []
+        self._current_assertions: list[TestResult] = []
+        self._uploaded_files: list[str] = []
         self._start_time: Optional[datetime] = None
         self._end_time: Optional[datetime] = None
+        self._console_handler: Optional[logging.Handler] = None
 
     # ==================== Lifecycle Methods ====================
 
-    def setUpClass(self) -> None:
+    def setUpClass(self) -> None:  # noqa: B027
         """Override in subclass for one-time setup."""
         pass
 
-    def tearDownClass(self) -> None:
+    def tearDownClass(self) -> None:  # noqa: B027
         """Override in subclass for one-time cleanup."""
         pass
 
@@ -173,16 +193,22 @@ class BudTestCase(ABC):
         all_passed = True
 
         self.log_info(f"{BOLD}{WHITE}{'=' * 100}{RESET}")
-        self.log_info(f"{BOLD}{WHITE}STARTING TEST CASE EXECUTION: {self.__class__.__name__}{RESET}")
+        self.log_info(
+            f"{BOLD}{WHITE}STARTING TEST CASE EXECUTION: {self.__class__.__name__}{RESET}"
+        )
         self.log_info(f"{BOLD}{WHITE}{'=' * 100}{RESET}")
 
         # Transition to clean logging for steps
         self._enable_clean_assertion_logging()
 
         try:
-            self.log_info(f"{BOLD}{MAGENTA}Entering setUpClass: Initializing persistent resources...{RESET}")
+            self.log_info(
+                f"{BOLD}{MAGENTA}Entering setUpClass: Initializing persistent resources...{RESET}"
+            )
             self.setUpClass()
-            self.log_info(f"{BOLD}{MAGENTA}setUpClass successfully established global test state.{RESET}")
+            self.log_info(
+                f"{BOLD}{MAGENTA}setUpClass successfully established global test state.{RESET}"
+            )
 
             test_methods = self._discover_test_methods()
 
@@ -199,7 +225,9 @@ class BudTestCase(ABC):
 
         finally:
             try:
-                self.log_info(f"{BOLD}{MAGENTA}Entering tearDownClass: Purging all persistent resources...{RESET}")
+                self.log_info(
+                    f"{BOLD}{MAGENTA}Entering tearDownClass: Purging all persistent resources...{RESET}"
+                )
                 self.tearDownClass()
                 self.log_info(f"{BOLD}{MAGENTA}tearDownClass completed.{RESET}")
             except Exception as e:
@@ -213,7 +241,7 @@ class BudTestCase(ABC):
         passed_assertions = 0
         failed_assertions = 0
         skipped_assertions = 0
-        
+
         for r in self._results:
             for a in r.assertions:
                 total_assertions += 1
@@ -228,14 +256,18 @@ class BudTestCase(ABC):
         status_color = GREEN if all_passed else RED
 
         self.log_info(f"{BOLD}{WHITE}{'=' * 100}{RESET}")
-        self.log_info(f"{BOLD}{WHITE}TEST CASE SUMMARY: {RESET}{BOLD}{status_color}{self.__class__.__name__} - {status_text}{RESET}")
+        self.log_info(
+            f"{BOLD}{WHITE}TEST CASE SUMMARY: {RESET}{BOLD}{status_color}{self.__class__.__name__} - {status_text}{RESET}"
+        )
         self.log_info(f"  Elapsed Time: {duration:.2f}s")
-        self.log_info(f"  Assertion Pass-Rate:   {GREEN}{passed_assertions} Passed{RESET} | {RED}{failed_assertions} Failed{RESET} | {GRAY}{skipped_assertions} Skipped{RESET} | Total Executed: {total_assertions}")
+        self.log_info(
+            f"  Assertion Pass-Rate:   {GREEN}{passed_assertions} Passed{RESET} | {RED}{failed_assertions} Failed{RESET} | {GRAY}{skipped_assertions} Skipped{RESET} | Total Executed: {total_assertions}"
+        )
         self.log_info(f"{BOLD}{WHITE}{'=' * 100}{RESET}")
 
         return all_passed
 
-    def _discover_test_methods(self) -> List[tuple]:
+    def _discover_test_methods(self) -> list[tuple]:
         methods = []
         for name in dir(self):
             if name.startswith("bud_"):
@@ -288,14 +320,14 @@ class BudTestCase(ABC):
                 if not a.passed and not a.skipped:
                     error_msg = self._format_assertion_line_for_storage(a)
                     break
-        
+
         result = TestMethodResult(
             method_name=method_name,
             passed=passed,
             assertions=self._current_assertions.copy(),
             duration_seconds=duration,
             error_message=error_msg,
-            summary_message=error_msg if not passed else f"Step Passed",
+            summary_message=error_msg if not passed else "Step Passed",
             traceback=tb,
         )
 
@@ -353,20 +385,26 @@ class BudTestCase(ABC):
         )
         self._current_assertions.append(result)
 
-        status_prefix = f"{GREEN}{BOLD}✓ PASSED{RESET}" if condition else f"{RED}{BOLD}✗ FAILED{RESET}"
-        
+        status_prefix = (
+            f"{GREEN}{BOLD}✓ PASSED{RESET}" if condition else f"{RED}{BOLD}✗ FAILED{RESET}"
+        )
+
         # High-visibility multi-color formatting
         line = f"{status_prefix}: {self._format_assertion_line(assertion_type, msg, result.expected, result.actual)}"
-        
+
         self._logger.info(line)
 
         if not condition and abort_on_fail:
             # Raise exception without ANSI codes for clean traceback
-            raise AssertionError(f"[{assertion_type}] EXPECTED: {result.expected} | ACTUAL: {result.actual} | MESSAGE: {msg}")
+            raise AssertionError(
+                f"[{assertion_type}] EXPECTED: {result.expected} | ACTUAL: {result.actual} | MESSAGE: {msg}"
+            )
 
         return condition
 
-    def _get_assertion_callsite(self) -> Dict[str, Any]:
+    def _get_assertion_callsite(self) -> dict[str, Any]:
+        if not self.CAPTURE_SOURCE_PATH:
+            return {}
         library_file = Path(__file__).resolve()
         stack = inspect.stack(context=3)
         selected = stack[2] if len(stack) > 2 else stack[-1]
@@ -384,63 +422,256 @@ class BudTestCase(ABC):
             "source_function": selected.function,
         }
 
-    def assertEqual(self, actual: Any, expected: Any, msg: str = "", abort_on_fail: bool = False, **kwargs) -> bool:
-        return self.assertTrue(actual == expected, msg=msg, expected=expected, actual=actual, abort_on_fail=abort_on_fail, assertion_type="AssertEqual", **kwargs)
+    def _format_value(self, value: Any) -> str:
+        """Convert a value to a truncated string for storage."""
+        return self._truncate_value(str(value))
 
-    def assertIn(self, actual: Any = None, expected: Any = None, member: Any = None, container: Any = None, msg: str = "", abort_on_fail: bool = False, **kwargs) -> bool:
+    def assertEqual(
+        self, actual: Any, expected: Any, msg: str = "", abort_on_fail: bool = False, **kwargs
+    ) -> bool:
+        return self.assertTrue(
+            actual == expected,
+            msg=msg,
+            expected=expected,
+            actual=actual,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertEqual",
+            **kwargs,
+        )
+
+    def assertIn(
+        self,
+        actual: Any = None,
+        expected: Any = None,
+        member: Any = None,
+        container: Any = None,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
         _m = member if member is not None else actual
         _c = container if container is not None else expected
-        return self.assertTrue(_m in _c, msg=msg, expected=f"'{_m}' in container", actual=_c, abort_on_fail=abort_on_fail, assertion_type="AssertIn", **kwargs)
+        if not hasattr(_c, "__contains__"):
+            raise TypeError(
+                f"assertIn requires a container with __contains__ (list, dict, set, str, etc.), "
+                f"got {type(_c).__name__}"
+            )
+        return self.assertTrue(
+            _m in _c,
+            msg=msg,
+            expected=f"'{_m}' in container",
+            actual=_c,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertIn",
+            **kwargs,
+        )
 
-    def assertNotIn(self, actual: Any = None, expected: Any = None, member: Any = None, container: Any = None, msg: str = "", abort_on_fail: bool = False, **kwargs) -> bool:
+    def assertNotIn(
+        self,
+        actual: Any = None,
+        expected: Any = None,
+        member: Any = None,
+        container: Any = None,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
         _m = member if member is not None else actual
         _c = container if container is not None else expected
-        return self.assertTrue(_m not in _c, msg=msg, expected=f"'{_m}' NOT in container", actual=_c, abort_on_fail=abort_on_fail, assertion_type="AssertNotIn", **kwargs)
+        if not hasattr(_c, "__contains__"):
+            raise TypeError(
+                f"assertNotIn requires a container with __contains__ (list, dict, set, str, etc.), "
+                f"got {type(_c).__name__}"
+            )
+        return self.assertTrue(
+            _m not in _c,
+            msg=msg,
+            expected=f"'{_m}' NOT in container",
+            actual=_c,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertNotIn",
+            **kwargs,
+        )
 
-    def assertInTolerance(self, actual: float, expected: float, absolute_tolerance: Optional[float] = None, relative_tolerance: Optional[float] = None, msg: str = "", abort_on_fail: bool = False, **kwargs) -> bool:
-        tol = absolute_tolerance or abs(expected * (relative_tolerance or 0))
+    def assertInTolerance(
+        self,
+        actual: float,
+        expected: float,
+        absolute_tolerance: Optional[float] = None,
+        relative_tolerance: Optional[float] = None,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
+        if absolute_tolerance is not None:
+            tol = absolute_tolerance
+        elif relative_tolerance is not None:
+            tol = abs(expected * relative_tolerance)
+        else:
+            tol = 0.0
         cond = (expected - tol) <= actual <= (expected + tol)
-        return self.assertTrue(cond, msg=msg, expected=f"{expected}±{tol}", actual=actual, abort_on_fail=abort_on_fail, assertion_type="AssertInTolerance", **kwargs)
+        return self.assertTrue(
+            cond,
+            msg=msg,
+            expected=f"{expected}±{tol}",
+            actual=actual,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertInTolerance",
+            **kwargs,
+        )
 
-    def assertInRange(self, actual: float, lower_bound: float, upper_bound: Optional[float] = None, include_bounds: bool = True, msg: str = "", abort_on_fail: bool = False, **kwargs) -> bool:
+    def assertInRange(
+        self,
+        actual: float,
+        lower_bound: float,
+        upper_bound: Optional[float] = None,
+        include_bounds: bool = True,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
         if upper_bound is not None:
-            cond = (lower_bound <= actual <= upper_bound) if include_bounds else (lower_bound < actual < upper_bound)
+            cond = (
+                (lower_bound <= actual <= upper_bound)
+                if include_bounds
+                else (lower_bound < actual < upper_bound)
+            )
             expected = f"[{lower_bound}, {upper_bound}]"
         else:
             cond = (actual >= lower_bound) if include_bounds else (actual > lower_bound)
             expected = f">= {lower_bound}" if include_bounds else f"> {lower_bound}"
-        return self.assertTrue(cond, msg=msg, expected=expected, actual=actual, abort_on_fail=abort_on_fail, assertion_type="AssertInRange", **kwargs)
+        return self.assertTrue(
+            cond,
+            msg=msg,
+            expected=expected,
+            actual=actual,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertInRange",
+            **kwargs,
+        )
+
+    def assertFalse(
+        self,
+        condition: bool,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self.assertTrue(
+            not condition,
+            msg=msg,
+            expected=False,
+            actual=bool(condition),
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertFalse",
+            **kwargs,
+        )
+
+    def assertNotEqual(
+        self,
+        actual: Any,
+        expected: Any,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self.assertTrue(
+            actual != expected,
+            msg=msg,
+            expected=f"!= {expected}",
+            actual=actual,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertNotEqual",
+            **kwargs,
+        )
+
+    def assertGreater(
+        self,
+        actual: Any,
+        expected: Any,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self.assertTrue(
+            actual > expected,
+            msg=msg,
+            expected=f"> {expected}",
+            actual=actual,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertGreater",
+            **kwargs,
+        )
+
+    def assertLess(
+        self,
+        actual: Any,
+        expected: Any,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self.assertTrue(
+            actual < expected,
+            msg=msg,
+            expected=f"< {expected}",
+            actual=actual,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertLess",
+            **kwargs,
+        )
+
+    def assertRegex(
+        self,
+        text: str,
+        pattern: str,
+        msg: str = "",
+        abort_on_fail: bool = False,
+        **kwargs,
+    ) -> bool:
+        cond = bool(re.search(pattern, text))
+        return self.assertTrue(
+            cond,
+            msg=msg,
+            expected=f"matches '{pattern}'",
+            actual=text,
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertRegex",
+            **kwargs,
+        )
+
+    def _truncate_value(self, value: str) -> str:
+        """Truncate a value string to MAX_RESULT_VALUE_LENGTH."""
+        if len(value) > self.MAX_RESULT_VALUE_LENGTH:
+            return value[: self.MAX_RESULT_VALUE_LENGTH] + "... <truncated>"
+        return value
 
     def log_info(self, message: str) -> None:
         self._logger.info(message)
 
     def _setup_initial_logging(self) -> None:
-        """Configures the logger to show LEVEL and NAME for the Test Case header."""
-        root_logger = logging.getLogger()
-        for handler in root_logger.handlers[:]:
-            root_logger.removeHandler(handler)
+        """Configures the instance logger to show LEVEL and NAME for the Test Case header."""
+        logger = self._logger
+        logger.handlers.clear()
         handler = logging.StreamHandler()
-        # Header format: Timestamp - Name - Level - Msg
-        formatter = ColoredFormatter(show_level=True)
-        handler.setFormatter(formatter)
-        root_logger.addHandler(handler)
-        root_logger.setLevel(self._log_level)
+        handler.setFormatter(ColoredFormatter(show_level=True))
+        logger.addHandler(handler)
+        logger.setLevel(self._log_level)
+        logger.propagate = False
+        self._console_handler = handler
 
     def _enable_clean_assertion_logging(self) -> None:
         """Switches to clean formatting (suppressing Level/Name) for assertion lines."""
-        root_logger = logging.getLogger()
-        for handler in root_logger.handlers[:]:
-            if isinstance(handler, logging.StreamHandler):
-                # Assertion format: Timestamp - Msg (Status: Type EXP | ACT | MSG)
-                handler.setFormatter(ColoredFormatter(show_level=False))
+        if self._console_handler and isinstance(self._console_handler, logging.StreamHandler):
+            self._console_handler.setFormatter(ColoredFormatter(show_level=False))
 
     def set_loglevel(self, level: int) -> None:
         self._log_level = level
         self._logger.setLevel(level)
 
-    def print_variables(self, variables: Dict[str, Any]) -> None:
+    def print_variables(self, variables: dict[str, Any]) -> None:
         for name, value in variables.items():
             self._logger.info(f"  {name}: {value}")
 
-    def get_results(self) -> List[TestMethodResult]:
+    def get_results(self) -> list[TestMethodResult]:
         return self._results

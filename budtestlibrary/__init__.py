@@ -14,6 +14,12 @@ Copyright (c) 2026 EmbedLabs
 
 from pathlib import Path
 
+from budtestlibrary.bloom_metadata import BloomMetaData
+from budtestlibrary.budtestcase import BudTestCase
+from budtestlibrary.config import BudConfig
+from budtestlibrary.flash_event import FlashEvent, FlashFailure, FlashSuccess
+
+
 def _get_version():
     """Reads version from pyproject.toml."""
     try:
@@ -24,16 +30,12 @@ def _get_version():
                     return line.split("=")[1].strip().strip('"')
     except Exception:
         pass
-    return "0.2.0"
+    return "0.2.1"
+
 
 __version__ = _get_version()
 __author__ = "EmbedLabs"
 __email__ = "dev@embedlabs.net"
-
-from budtestlibrary.budtestcase import BudTestCase
-from budtestlibrary.bloom_metadata import BloomMetaData
-from budtestlibrary.flash_event import FlashEvent, FlashSuccess, FlashFailure
-from budtestlibrary.config import BudConfig
 
 __all__ = [
     "BudTestCase",

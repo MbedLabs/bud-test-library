@@ -1,22 +1,12 @@
 # budtestlibrary
 
 Universal test automation framework for HIL, SIL, Web, Mobile, Cloud, and E2E testing.
-
-## Overview
-
-`budtestlibrary` provides a comprehensive test framework with lifecycle management, rich assertions, logging, and Bloom PLM integration:
-
-- **BudTestCase**: Base class for test cases with lifecycle hooks, rich assertions, and logging
-- **BloomMetaData**: Link tests to Bloom PLM test cases for traceability
-- **FlashEvent**: Standardized firmware flashing abstraction
+It provides a comprehensive test framework with lifecycle management, rich assertions, logging, and Bloom PLM integration.
 
 ## Installation
 
-To use `budtestlibrary` in your projects, add it as a submodule:
-
 ```bash
-git submodule add https://github.com/MbedLabs/bud-test-library.git
-pip install -e ./bud-test-library
+pip install budtestlibrary
 ```
 
 ## Quick Start
@@ -74,14 +64,35 @@ runnerSocketPort=53035
 
 ## Assertions
 
-### assertTrue
+### assertTrue / assertFalse
 ```python
 self.assertTrue(condition, msg="Description", abort_on_fail=False)
+self.assertFalse(condition, msg="Description")
 ```
 
-### assertEqual
+### assertEqual / assertNotEqual
 ```python
 self.assertEqual(actual, expected, msg="Description")
+self.assertNotEqual(actual, expected, msg="Description")
+```
+
+### assertGreater / assertLess
+```python
+self.assertGreater(actual, expected, msg="Description")
+self.assertLess(actual, expected, msg="Description")
+```
+
+### assertIn / assertNotIn
+```python
+self.assertIn(member=2, container=[1, 2, 3], msg="Description")
+self.assertNotIn(member=99, container=[1, 2, 3], msg="Description")
+```
+
+### assertRegex
+
+### assertRegex
+```python
+self.assertRegex(text="hello world", pattern=r"hello", msg="Description")
 ```
 
 ### assertInTolerance

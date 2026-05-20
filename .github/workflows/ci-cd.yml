@@ -6,10 +6,34 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Black format check
+        run: black --check budtestlibrary tests
+
+      - name: Ruff lint
+        run: ruff check budtestlibrary tests
+
+      - name: Run tests
+        run: pytest
+
   build:
+    needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +49,9 @@ jobs:
 
       - name: Build distributions
         run: python -m build
+
+      - name: Check distributions
+        run: twine check dist/*
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
