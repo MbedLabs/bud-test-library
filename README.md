@@ -16,7 +16,7 @@ import logging
 from budtestlibrary import BudTestCase, BloomMetaData
 
 class MyTest(BudTestCase):
-    bloom_metadata = BloomMetaData("my-project", "001")
+    bloom_metadata = BloomMetaData("PRJ", "001")
 
     def setUpClass(self):
         self.log_info("Setting up test...")
