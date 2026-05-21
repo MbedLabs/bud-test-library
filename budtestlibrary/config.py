@@ -13,10 +13,13 @@ Environment variables:
 """
 
 import configparser
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -28,10 +31,10 @@ class BudConfig:
     Environment variables take precedence over file configuration.
 
     Usage:
-        config = BudConfig()
-        print(config.backend_url)
+        from budtestlibrary.config import get_default_config
 
-        # With custom properties file
+        config = get_default_config()
+        # Or construct explicitly (does not use the lazy singleton):
         config = BudConfig(properties_file="/path/to/app.properties")
     """
 
@@ -128,7 +131,7 @@ class BudConfig:
         except FileNotFoundError:
             pass  # Use defaults if file not found
         except Exception as e:
-            print(f"Warning: Error loading properties file: {e}")
+            _logger.warning("Error loading properties file: %s", e)
 
     def _load_from_env(self) -> None:
         """Load configuration from environment variables."""
@@ -196,5 +199,17 @@ class BudConfig:
         return self.api_base_url + "runners"
 
 
-# Default configuration instance
-default_config = BudConfig()
+_default_config: Optional[BudConfig] = None
+
+
+def get_default_config() -> BudConfig:
+    """
+    Return the shared default configuration instance (lazy-loaded).
+
+    Avoids filesystem and environment reads at import time; the first call
+    constructs and caches a single ``BudConfig`` instance.
+    """
+    global _default_config
+    if _default_config is None:
+        _default_config = BudConfig()
+    return _default_config
