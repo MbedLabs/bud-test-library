@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "budtestlibrary"
-version = "0.3.0"
+version = "0.2.1"
 description = "Universal Bud Test Automation Framework for Hardware-in-Loop, Software-in-the-Loop, Web-Apps, Mobile, Cloud, and End-to-End Testing. Created by EmbedLabs."
 readme = "README.md"
 license = "AGPL-3.0"
