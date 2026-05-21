@@ -16,7 +16,7 @@ from pathlib import Path
 
 from budtestlibrary.bloom_metadata import BloomMetaData
 from budtestlibrary.budtestcase import BudTestCase
-from budtestlibrary.config import BudConfig
+from budtestlibrary.config import BudConfig, get_default_config
 from budtestlibrary.flash_event import FlashEvent, FlashFailure, FlashSuccess
 
 
@@ -44,4 +44,5 @@ __all__ = [
     "FlashSuccess",
     "FlashFailure",
     "BudConfig",
+    "get_default_config",
 ]

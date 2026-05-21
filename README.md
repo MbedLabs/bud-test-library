@@ -89,8 +89,6 @@ self.assertNotIn(member=99, container=[1, 2, 3], msg="Description")
 ```
 
 ### assertRegex
-
-### assertRegex
 ```python
 self.assertRegex(text="hello world", pattern=r"hello", msg="Description")
 ```
@@ -123,6 +121,28 @@ self.assertInRange(
     msg="Description",
 )
 ```
+
+## Result capture options
+
+Subclass attributes on `BudTestCase` control what is stored in assertion and method results (and serialized via `to_dict()`):
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `CAPTURE_SOURCE_PATH` | `True` | When `True`, failed assertions record `source_file`, `source_line`, and `source_function` from the call site. Set to `False` to omit source location (smaller payloads, less introspection overhead). |
+| `CAPTURE_TRACEBACK` | `True` | When `True`, tracebacks are attached to failed assertions and method results where applicable. Set to `False` to omit traceback strings from stored results. |
+| `MAX_RESULT_VALUE_LENGTH` | `5000` | Maximum character length for `expected`, `actual`, and `result` strings in `TestResult.to_dict()`. Longer values are truncated with `"... <truncated>"`. |
+
+```python
+class CompactResultsTest(BudTestCase):
+    CAPTURE_SOURCE_PATH = False
+    CAPTURE_TRACEBACK = False
+    MAX_RESULT_VALUE_LENGTH = 500
+
+    def bud_check(self):
+        self.assertTrue(True, msg="minimal result payload")
+```
+
+Default shared configuration (backend URLs, tokens) is available via `get_default_config()` from `budtestlibrary` or `budtestlibrary.config` — it is created on first use, not at import time.
 
 ## Result and Flash Abstractions
 
