@@ -30,7 +30,7 @@ def _get_version():
                     return line.split("=")[1].strip().strip('"')
     except Exception:
         pass
-    return "0.2.1"
+    return "0.3.0"
 
 
 __version__ = _get_version()
