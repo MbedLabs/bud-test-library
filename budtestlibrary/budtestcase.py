@@ -89,6 +89,7 @@ class TestResult:
     traceback: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.now)
     metadata: dict[str, Any] = field(default_factory=dict)
+    max_result_value_length: int = _DEFAULT_MAX_RESULT_VALUE_LENGTH
 
     def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary for JSON serialization."""
@@ -97,9 +98,21 @@ class TestResult:
             "message": self.message,
             "skipped": self.skipped,
             "assertion_type": self.assertion_type,
-            "expected": _truncate_str(str(self.expected)) if self.expected is not None else None,
-            "actual": _truncate_str(str(self.actual)) if self.actual is not None else None,
-            "result": _truncate_str(str(self.result)) if self.result is not None else None,
+            "expected": (
+                _truncate_str(str(self.expected), self.max_result_value_length)
+                if self.expected is not None
+                else None
+            ),
+            "actual": (
+                _truncate_str(str(self.actual), self.max_result_value_length)
+                if self.actual is not None
+                else None
+            ),
+            "result": (
+                _truncate_str(str(self.result), self.max_result_value_length)
+                if self.result is not None
+                else None
+            ),
             "source_file": self.source_file,
             "source_line": self.source_line,
             "source_function": self.source_function,
@@ -302,13 +315,14 @@ class BudTestCase(ABC):  # noqa: B024
         except AssertionError as e:
             passed = False
             error_msg = str(e)
-            tb = traceback.format_exc()
+            tb = traceback.format_exc() if self.CAPTURE_TRACEBACK else None
         except Exception as e:
             passed = False
             error_msg = str(e)
-            tb = traceback.format_exc()
+            full_tb = traceback.format_exc()
+            tb = full_tb if self.CAPTURE_TRACEBACK else None
             self._logger.error(f"{RED}UNHANDLED EXCEPTION DURING STEP EXECUTION: {e}{RESET}")
-            self._logger.error(tb)
+            self._logger.error(full_tb)
 
         duration = time.time() - start_time
 
@@ -354,6 +368,7 @@ class BudTestCase(ABC):  # noqa: B024
             source_line=callsite.get("source_line"),
             source_function=callsite.get("source_function"),
             metadata=kwargs,
+            max_result_value_length=self.MAX_RESULT_VALUE_LENGTH,
         )
         self._current_assertions.append(result)
         self.log_info(f"{GRAY}⚠ SKIPPED{RESET}: {BOLD}{GRAY}{msg}{RESET}")
@@ -380,8 +395,9 @@ class BudTestCase(ABC):  # noqa: B024
             source_line=callsite.get("source_line"),
             source_function=callsite.get("source_function"),
             code_context=callsite.get("code_context"),
-            traceback=callsite.get("traceback"),
+            traceback=callsite.get("traceback") if not condition else None,
             metadata=kwargs,
+            max_result_value_length=self.MAX_RESULT_VALUE_LENGTH,
         )
         self._current_assertions.append(result)
 
@@ -404,23 +420,32 @@ class BudTestCase(ABC):  # noqa: B024
 
     def _get_assertion_callsite(self) -> dict[str, Any]:
         if not self.CAPTURE_SOURCE_PATH:
-            return {}
-        library_file = Path(__file__).resolve()
-        stack = inspect.stack(context=3)
-        selected = stack[2] if len(stack) > 2 else stack[-1]
-        for frame in stack[1:]:
-            try:
-                frame_file = Path(frame.filename).resolve()
-            except OSError:
-                frame_file = Path(frame.filename)
-            if frame_file != library_file:
-                selected = frame
-                break
-        return {
-            "source_file": selected.filename,
-            "source_line": selected.lineno,
-            "source_function": selected.function,
-        }
+            callsite = {}
+        else:
+            library_file = Path(__file__).resolve()
+            stack = inspect.stack(context=3)
+            selected = stack[2] if len(stack) > 2 else stack[-1]
+            for frame in stack[1:]:
+                try:
+                    frame_file = Path(frame.filename).resolve()
+                except OSError:
+                    frame_file = Path(frame.filename)
+                if frame_file != library_file:
+                    selected = frame
+                    break
+            callsite = {
+                "source_file": selected.filename,
+                "source_line": selected.lineno,
+                "source_function": selected.function,
+                "code_context": (
+                    "".join(selected.code_context).strip() if selected.code_context else None
+                ),
+            }
+
+        if self.CAPTURE_TRACEBACK:
+            callsite["traceback"] = "".join(traceback.format_stack()[:-1]).strip()
+
+        return callsite
 
     def _format_value(self, value: Any) -> str:
         """Convert a value to a truncated string for storage."""

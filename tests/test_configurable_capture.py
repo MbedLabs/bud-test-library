@@ -67,3 +67,44 @@ class TestTracebackCapture:
         assertion = result.assertions[0]
         # Passing assertions typically don't have tracebacks
         assert assertion.traceback is None
+
+    def test_traceback_captured_for_failed_assertions_by_default(self):
+        class FailTest(BudTestCase):
+            def bud_check(self):
+                self.assertTrue(False, msg="fail")
+
+        tc = FailTest()
+        tc.set_loglevel(logging.CRITICAL)
+        tc.run()
+        assertion = tc.get_results()[0].assertions[0]
+        assert assertion.traceback is not None
+        assert "bud_check" in assertion.traceback
+
+    def test_traceback_suppressed_when_capture_disabled(self):
+        class NoTracebackTest(BudTestCase):
+            CAPTURE_TRACEBACK = False
+
+            def bud_check(self):
+                self.assertTrue(False, msg="no traceback")
+
+        tc = NoTracebackTest()
+        tc.set_loglevel(logging.CRITICAL)
+        tc.run()
+        result = tc.get_results()[0]
+        assertion = result.assertions[0]
+        assert assertion.traceback is None
+        assert result.traceback is None
+
+    def test_method_traceback_suppressed_when_capture_disabled(self):
+        class NoMethodTracebackTest(BudTestCase):
+            CAPTURE_TRACEBACK = False
+
+            def bud_check(self):
+                raise RuntimeError("boom")
+
+        tc = NoMethodTracebackTest()
+        tc.set_loglevel(logging.CRITICAL)
+        tc.run()
+        result = tc.get_results()[0]
+        assert result.traceback is None
+        assert result.error_message == "boom"

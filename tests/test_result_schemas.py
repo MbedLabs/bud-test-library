@@ -115,6 +115,18 @@ class TestResultDict:
         assert d["expected"] == "hello"
         assert d["actual"] == "world"
 
+    def test_truncation_uses_per_result_limit(self):
+        r = TestResult(
+            passed=False,
+            message="small limit",
+            expected="abcdefghij",
+            actual="1234567890",
+            max_result_value_length=4,
+        )
+        d = r.to_dict()
+        assert d["expected"] == "abcd... <truncated>"
+        assert d["actual"] == "1234... <truncated>"
+
     def test_metadata_keys_preserved(self):
         r = TestResult(
             passed=True,
@@ -216,3 +228,20 @@ class TestTruncateHelper:
     def test_exact_boundary(self):
         result = _truncate_str("12345", max_length=5)
         assert result == "12345"
+
+
+class TestConfiguredResultLimits:
+    def test_budtestcase_max_result_value_length_affects_serialization(self):
+        from budtestlibrary import BudTestCase
+
+        class ShortResultTest(BudTestCase):
+            MAX_RESULT_VALUE_LENGTH = 3
+
+            def bud_check(self):
+                self.assertEqual("abcdef", "uvwxyz", msg="truncate")
+
+        tc = ShortResultTest()
+        tc.run()
+        assertion_dict = tc.get_results()[0].assertions[0].to_dict()
+        assert assertion_dict["expected"] == "uvw... <truncated>"
+        assert assertion_dict["actual"] == "abc... <truncated>"

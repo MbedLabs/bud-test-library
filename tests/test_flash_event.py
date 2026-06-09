@@ -81,6 +81,8 @@ class TestFlashSuccess:
         assert d["status"] == "success"
         assert d["message"] == "Done"
         assert d["metadata"] == {"chk": "abc"}
+        assert "timestamp" in d
+        assert "duration_seconds" in d
         assert "error_message" not in d
         assert "error_code" not in d
         assert "recoverable" not in d
@@ -105,6 +107,8 @@ class TestFlashFailure:
         assert d["error_message"] == "Verify failed"
         assert d["error_code"] == 42
         assert d["recoverable"] is False
+        assert "timestamp" in d
+        assert "duration_seconds" in d
 
     def test_recoverable_defaults_true(self):
         ff = FlashFailure("err")
