@@ -71,9 +71,8 @@ docs = [
 [project.urls]
 Homepage = "https://embedlabs.de"
 Documentation = "https://embedlabs.de/docs"
-Repository = "https://github.com/MbedLabs/bud-test-library"
-Issues = "https://github.com/MbedLabs/bud-test-library/issues"
-Changelog = "https://github.com/MbedLabs/bud-test-library/blob/main/CHANGELOG.md"
+Changelog = "https://embedlabs.de/docs"
+Support = "https://embedlabs.de"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -59,7 +59,6 @@ export BUD_TOKEN="your-api-token"
 ```properties
 budBackend=https://<your-bud-instance-url>/
 budRunnerAccount=my-runner
-runnerSocketPort=53035
 ```
 
 ## Assertions
@@ -178,4 +177,4 @@ This project is licensed under the **GNU Affero General Public License v3.0 (AGP
 
 Copyright (C) 2026 EmbedLabs.
 
-For commercial licensing options that do not require AGPL compliance, contact dev@embedlabs.net. Contributions are accepted under the [CLA](CLA.md) — see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+For commercial licensing options that do not require AGPL compliance, contact dev@embedlabs.net. For support or private-source collaboration, email dev@embedlabs.net.

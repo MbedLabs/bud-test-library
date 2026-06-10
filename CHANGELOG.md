@@ -32,6 +32,3 @@ All notable changes to `budtestlibrary` will be documented in this file.
 - `BloomMetaData` for Bloom PLM integration
 - `FlashEvent` abstraction for firmware flashing
 - Environment variable and `app.properties` configuration
-
-[0.3.0]: https://github.com/MbedLabs/bud-test-library/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/MbedLabs/bud-test-library/releases/tag/v0.2.0
