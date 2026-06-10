@@ -61,6 +61,21 @@ budBackend=https://<your-bud-instance-url>/
 budRunnerAccount=my-runner
 ```
 
+## Examples
+
+The [`examples/`](examples/) directory includes runnable starting points for common use cases:
+
+| File | Scenario |
+|------|----------|
+| `minimal_test.py` | Smallest possible `BudTestCase` with core assertions |
+| `bloom_metadata_test.py` | Bloom PLM traceability metadata on test results |
+| `flash_event_example.py` | Firmware flashing with `FlashEvent`, `FlashSuccess`, and `FlashFailure` |
+| `hil_test.py` | Hardware-in-the-loop checks against a target board |
+| `sil_test.py` | Software-in-the-loop logic validation |
+| `api_testing_example.py` | Service/API assertions with response payload checks |
+| `ui_testing_example.py` | UI-style assertions for page state and user feedback |
+| `cloud_e2e_example.py` | Cloud / end-to-end test flow with latency checks |
+
 ## Assertions
 
 ### assertTrue / assertFalse
@@ -165,6 +180,50 @@ class MyFlashEvent(FlashEvent):
 event = MyFlashEvent()
 result = event.execute("/path/to/firmware.hex")
 ```
+
+## Result Schema
+
+`budtestlibrary` produces two primary result shapes:
+
+### `TestResult`
+
+One assertion-level record. Serialized keys include:
+- `passed`
+- `message`
+- `skipped`
+- `assertion_type`
+- `expected`
+- `actual`
+- `result`
+- `source_file`
+- `source_line`
+- `source_function`
+- `code_context`
+- `traceback`
+- `timestamp`
+- `metadata`
+
+### `TestMethodResult`
+
+One `bud_*` method-level record. Serialized keys include:
+- `method_name`
+- `passed`
+- `skipped`
+- `assertions`
+- `duration_seconds`
+- `error_message`
+- `summary_message`
+- `traceback`
+- `metadata`
+
+In a typical integration, `bud_runner` flattens these method-level results into
+the payload it uploads to Bud TMP while preserving assertion detail.
+
+## Compatibility
+
+| `budtestlibrary` | Intended `bud_runner` pairing | Notes |
+|------------------|--------------------------------|-------|
+| `0.3.x` | `0.4.7+` | Supports configurable traceback/source capture, result truncation, `FlashEvent`, and separate `test_software` vs `software_under_test` metadata in the runner flow |
 
 ## Related Packages
 
