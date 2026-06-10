@@ -4,10 +4,7 @@ from budtestlibrary import BudTestCase, BloomMetaData
 
 
 class MotorControllerTest(BudTestCase):
-    bloom_metadata = BloomMetaData(
-        project="MCU",
-        tc_id_suffix="001"
-    )
+    bloom_metadata = BloomMetaData(project="MCU", tc_id_suffix="001")
 
     def bud_speed_control(self):
         # Simulated motor speed reading
