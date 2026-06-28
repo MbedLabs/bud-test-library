@@ -12,6 +12,7 @@ PLM/PLM: Bloom PLM
 Copyright (c) 2026 EmbedLabs
 """
 
+from importlib.metadata import version
 from pathlib import Path
 
 from budtestlibrary.bloom_metadata import BloomMetaData
@@ -23,6 +24,11 @@ from budtestlibrary.flash_event import FlashEvent, FlashFailure, FlashSuccess
 def _get_version():
     """Reads version from pyproject.toml."""
     try:
+        return version("budtestlibrary")
+    except Exception:
+        pass
+
+    try:
         pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         if pyproject_path.exists():
             for line in pyproject_path.read_text().splitlines():
@@ -30,7 +36,7 @@ def _get_version():
                     return line.split("=")[1].strip().strip('"')
     except Exception:
         pass
-    return "0.3.0"
+    return "unknown"
 
 
 __version__ = _get_version()

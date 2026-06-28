@@ -2,6 +2,17 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [1.0.0] — 2026-06-28
+
+### Added
+- Release metadata regression coverage for version, license metadata, and changelog alignment
+
+### Changed
+- Package version advanced to `1.0.0`
+- Packaging metadata now uses a PEP 621-compatible license table
+- Release classifier moved from beta to production/stable
+- Runtime version resolution now prefers installed package metadata before falling back to local source metadata
+
 ## [0.3.0] — 2026-05-20
 
 ### Added
