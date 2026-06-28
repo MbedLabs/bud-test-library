@@ -13,26 +13,35 @@ pip install budtestlibrary
 
 ## Quick Start
 
-`BloomMetaData` is optional. Start with a plain `BudTestCase`, then add Bloom
-traceability only when you want linked test-case metadata in results.
-
 ```python
-from budtestlibrary import BudTestCase
+import logging
+from budtestlibrary import BudTestCase, BloomMetaData
 
 class MyTest(BudTestCase):
-    def bud_health_check(self):
-        self.assertTrue(True, msg="Framework initialized")
+    bloom_metadata = BloomMetaData("PRJ", "001")  # Optional: attach Bloom traceability metadata
+
+    def setUpClass(self):
+        self.log_info("Setting up test...")
+
+    def bud_check_response(self):
+        response = get_response()
+        self.assertTrue(response.ok, msg="Response is successful")
 
     def bud_validate_output(self):
+        result = compute_result()
         self.assertInTolerance(
-            actual=42.2,
+            result,
             expected=42.0,
             absolute_tolerance=0.5,
             msg="Output within expected range",
         )
 
+    def tearDownClass(self):
+        self.log_info("Tearing down test...")
+
 if __name__ == "__main__":
     test = MyTest()
+    test.set_loglevel(logging.INFO)
     test.run()
 ```
 
