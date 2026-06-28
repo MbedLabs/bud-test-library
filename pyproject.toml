@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "budtestlibrary"
-version = "1.0.0.post1"
+version = "1.0.0.post2"
 description = "Universal Bud test automation framework for HIL, SIL, web, mobile, cloud, and end-to-end testing."
 readme = "README.md"
 license = {text = "AGPL-3.0-only"}
@@ -70,10 +70,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://embedlabs.de"
-Documentation = "https://embedlabs.de/docs"
-Changelog = "https://embedlabs.de/docs"
-Support = "https://embedlabs.de"
+Homepage = "https://embedlabs.net"
+Documentation = "https://embedlabs.net/docs"
+Changelog = "https://embedlabs.net/docs"
+Support = "https://embedlabs.net"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -77,7 +77,7 @@ budRunnerAccount=my-runner
 
 ## Examples
 
-The `examples/` directory includes runnable starting points for common use cases:
+The source distribution includes runnable example scenarios for common use cases:
 
 | File | Scenario |
 |------|----------|
@@ -237,7 +237,7 @@ the payload it uploads to Bud TMP while preserving assertion detail.
 
 | `budtestlibrary` | Intended `bud_runner` pairing | Notes |
 |------------------|--------------------------------|-------|
-| `1.0.0.post1` | `1.0.0.post1` | Supports configurable traceback/source capture, result truncation, `FlashEvent`, and separate `test_software` vs `software_under_test` metadata in the runner flow |
+| `1.0.0.post2` | `1.0.0.post2` | Supports configurable traceback/source capture, result truncation, `FlashEvent`, and separate `test_software` vs `software_under_test` metadata in the runner flow |
 
 ## Related Packages
 
@@ -247,7 +247,8 @@ the payload it uploads to Bud TMP while preserving assertion detail.
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See `LICENSE` for the full text.
+This project is licensed under the **GNU Affero General Public License v3.0
+(AGPL-3.0)**. Full license text: https://www.gnu.org/licenses/agpl-3.0.html
 
 Copyright (C) 2026 EmbedLabs.
 
