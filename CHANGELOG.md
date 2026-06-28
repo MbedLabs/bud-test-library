@@ -2,6 +2,13 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [1.0.0.post1] — 2026-06-28
+
+### Changed
+- Package version advanced to `1.0.0.post1` for a docs-only PyPI metadata correction
+- Package author metadata now credits Amine El Omari
+- README now credits the creator and marks the Qt desktop client as roadmap-only
+
 ## [1.0.0] — 2026-06-28
 
 ### Added
