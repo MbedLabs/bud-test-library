@@ -2,6 +2,14 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [1.0.0.post2] — 2026-06-28
+
+### Changed
+- Package version advanced to `1.0.0.post2` for the final public metadata and documentation corrections
+- Project URLs now point to `embedlabs.net`
+- Quick-start example keeps the original lifecycle flow and marks `BloomMetaData` optional inline
+- Separate optional Bloom traceability section remains documented in the README
+
 ## [1.0.0.post1] — 2026-06-28
 
 ### Changed
