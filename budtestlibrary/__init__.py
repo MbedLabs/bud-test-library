@@ -40,7 +40,7 @@ def _get_version():
 
 
 __version__ = _get_version()
-__author__ = "EmbedLabs"
+__author__ = "Amine El Omari"
 __email__ = "dev@embedlabs.net"
 
 __all__ = [

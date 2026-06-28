@@ -3,6 +3,8 @@
 Universal test automation framework for HIL, SIL, Web, Mobile, Cloud, and E2E testing.
 It provides a comprehensive test framework with lifecycle management, rich assertions, logging, and Bloom PLM integration.
 
+Creator: Amine El Omari
+
 ## Installation
 
 ```bash
@@ -11,36 +13,39 @@ pip install budtestlibrary
 
 ## Quick Start
 
+`BloomMetaData` is optional. Start with a plain `BudTestCase`, then add Bloom
+traceability only when you want linked test-case metadata in results.
+
 ```python
-import logging
-from budtestlibrary import BudTestCase, BloomMetaData
+from budtestlibrary import BudTestCase
 
 class MyTest(BudTestCase):
-    bloom_metadata = BloomMetaData("PRJ", "001")
-
-    def setUpClass(self):
-        self.log_info("Setting up test...")
-
-    def bud_check_response(self):
-        response = get_response()
-        self.assertTrue(response.ok, msg="Response is successful")
+    def bud_health_check(self):
+        self.assertTrue(True, msg="Framework initialized")
 
     def bud_validate_output(self):
-        result = compute_result()
         self.assertInTolerance(
-            result,
+            actual=42.2,
             expected=42.0,
             absolute_tolerance=0.5,
             msg="Output within expected range",
         )
 
-    def tearDownClass(self):
-        self.log_info("Tearing down test...")
-
 if __name__ == "__main__":
     test = MyTest()
-    test.set_loglevel(logging.INFO)
     test.run()
+```
+
+### Optional Bloom Traceability
+
+If you want Bud/Bloom traceability on reported results, add `BloomMetaData` to
+the test class:
+
+```python
+from budtestlibrary import BudTestCase, BloomMetaData
+
+class TraceableTest(BudTestCase):
+    bloom_metadata = BloomMetaData("PRJ", "001")
 ```
 
 ## Configuration
@@ -63,7 +68,7 @@ budRunnerAccount=my-runner
 
 ## Examples
 
-The [`examples/`](examples/) directory includes runnable starting points for common use cases:
+The `examples/` directory includes runnable starting points for common use cases:
 
 | File | Scenario |
 |------|----------|
@@ -223,16 +228,17 @@ the payload it uploads to Bud TMP while preserving assertion detail.
 
 | `budtestlibrary` | Intended `bud_runner` pairing | Notes |
 |------------------|--------------------------------|-------|
-| `0.3.x` | `0.4.7+` | Supports configurable traceback/source capture, result truncation, `FlashEvent`, and separate `test_software` vs `software_under_test` metadata in the runner flow |
+| `1.0.0.post1` | `1.0.0.post1` | Supports configurable traceback/source capture, result truncation, `FlashEvent`, and separate `test_software` vs `software_under_test` metadata in the runner flow |
 
 ## Related Packages
 
 - **bud_runner**: CLI tool for test execution and CI/CD integration
-- **pybudgui**: PyQt6 desktop application for manual testing and result visualization
+- **pybudgui**: Planned Qt desktop client; remains roadmap work and is not part
+  of the released package surface yet.
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See the [LICENSE](LICENSE) file for the full text.
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See `LICENSE` for the full text.
 
 Copyright (C) 2026 EmbedLabs.
 
