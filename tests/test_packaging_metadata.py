@@ -37,9 +37,14 @@ def test_readme_credits_creator_and_marks_qt_client_as_roadmap_only() -> None:
     assert "Creator: Amine El Omari" in readme
     assert "remains roadmap work" in readme
     assert "- **pybudgui**:" in readme
-    assert "`BloomMetaData` is optional." in readme
+    assert (
+        'bloom_metadata = BloomMetaData("PRJ", "001")  # Optional: attach Bloom traceability metadata'
+        in readme
+    )
     assert "### Optional Bloom Traceability" in readme
-    assert "from budtestlibrary import BudTestCase\n" in readme
+    assert "def setUpClass(self):" in readme
+    assert "def tearDownClass(self):" in readme
+    assert "def bud_check_response(self):" in readme
 
 
 def test_readme_has_no_relative_markdown_links_that_break_on_pypi() -> None:
