@@ -2,6 +2,16 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [1.0.2] — 2026-07-22
+
+### Changed
+- README expanded: table of contents, public API, test structure, logging, `skipAssert`, `get_results()`, `BudConfig`, and development setup sections added
+- Commercial licensing wording updated to explicitly clarify and reference the hosted Bud (Test Management Platform) and Bloom (Product Lifecycle Management) applications; contact now `sales@embedlabs.de`
+
+### Added
+- Test coverage for all bundled `budtestlibrary.examples` modules — import, run-as-script, and result validation
+- `#`-prefixed anchor links allowed in README relative-link validation (PyPI supports same-page anchors)
+
 ## [1.0.1] — 2026-07-19
 
 ### Changed
