@@ -42,18 +42,16 @@ from budtestlibrary import BloomMetaData, BudTestCase
 
 
 class MyTest(BudTestCase):
-    # Optional Bloom integration. Bud uses this metadata when the related
-    # project is linked to Bloom.
-    bloom_metadata = BloomMetaData("PRJ", "001")
+    bloom_metadata = BloomMetaData("PRJ", "001")  # Optional: attach Bloom traceability metadata
 
     def setUpClass(self):
         self.log_info("Setting up test")
 
-    def bud_01_check_response(self):
+    def bud_check_response(self):
         response = get_response()
         self.assertTrue(response.ok, msg="Response is successful")
 
-    def bud_02_validate_output(self):
+    def bud_validate_output(self):
         result = compute_result()
         self.assertInTolerance(
             result,
@@ -72,7 +70,7 @@ if __name__ == "__main__":
     test.run()
 ```
 
-## Optional Bloom integration
+### Optional Bloom Traceability
 
 `BloomMetaData` optionally links a test class to a Bloom test case using the
 `{Project}-TC-{ID}` convention:
@@ -245,6 +243,11 @@ mypy budtestlibrary/
 pytest tests/ -v
 ```
 
+## Related packages
+
+- **bud_runner**: CLI tool for test execution and Bud integration.
+- **pybudgui**: Python Qt desktop client for manual test execution, planned on the roadmap.
+
 ## Licence
 
 `budtestlibrary` is permanent free and open-source software licensed under the
@@ -265,5 +268,6 @@ Technical, security, and contribution questions: `dev@embedlabs.net`.
 Copyright (C) 2026 Mohamed Amine El Omari Alaoui, operating under the name
 EmbedLabs.
 
-See [`LICENSE`](LICENSE), [`CONTRIBUTING.md`](CONTRIBUTING.md), and
-[`CLA.md`](CLA.md).
+- [Full licence](https://github.com/MbedLabs/bud-test-library/blob/main/LICENSE)
+- [Contributing](https://github.com/MbedLabs/bud-test-library/blob/main/CONTRIBUTING.md)
+- [Contributor License Agreement](https://github.com/MbedLabs/bud-test-library/blob/main/CLA.md)
