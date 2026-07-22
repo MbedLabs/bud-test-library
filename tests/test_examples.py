@@ -32,9 +32,7 @@ def example_modules():
     if not EXAMPLES_DIR.is_dir():
         return []
     return [
-        _python_module_name(f)
-        for f in sorted(EXAMPLES_DIR.glob("*.py"))
-        if f.name != "__init__.py"
+        _python_module_name(f) for f in sorted(EXAMPLES_DIR.glob("*.py")) if f.name != "__init__.py"
     ]
 
 
@@ -101,7 +99,9 @@ class TestExampleResults:
         test_classes = [
             v
             for v in mod.__dict__.values()
-            if isinstance(v, type) and v.__name__.endswith("Test") and not v.__name__.startswith("Test")
+            if isinstance(v, type)
+            and v.__name__.endswith("Test")
+            and not v.__name__.startswith("Test")
         ]
         return test_classes[0] if test_classes else None
 
@@ -124,9 +124,9 @@ class TestExampleResults:
         results = tc.get_results()
         assert len(results) > 0, f"Example {module_name} produced no results"
         for r in results:
-            assert r.method_name.startswith("bud_"), (
-                f"Non-test method {r.method_name!r} was discovered in {module_name}"
-            )
+            assert r.method_name.startswith(
+                "bud_"
+            ), f"Non-test method {r.method_name!r} was discovered in {module_name}"
 
     def test_bloom_metadata_tc_id_present(self):
         from budtestlibrary.examples.bloom_metadata_test import MotorControllerTest
@@ -136,9 +136,9 @@ class TestExampleResults:
         tc.run()
         results = tc.get_results()
         for r in results:
-            assert r.metadata.get("tc_id") == "MCU-TC-001", (
-                f"Missing or wrong tc_id in {r.method_name}"
-            )
+            assert (
+                r.metadata.get("tc_id") == "MCU-TC-001"
+            ), f"Missing or wrong tc_id in {r.method_name}"
 
     def test_flash_event_example(self):
         """Run the flash_event_example and verify it handles success and failure paths."""
