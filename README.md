@@ -335,14 +335,14 @@ python -c "import budtestlibrary.examples; import pathlib; print(pathlib.Path(bu
 
 | File | Scenario |
 |------|----------|
-| [`minimal_test.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/minimal_test.py) | Smallest possible `BudTestCase` with all core assertions |
-| [`bloom_metadata_test.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/bloom_metadata_test.py) | Bloom PLM traceability metadata on test results |
-| [`flash_event_example.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/flash_event_example.py) | Firmware flashing with `FlashEvent`, `FlashSuccess`, and `FlashFailure` |
-| [`hil_test.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/hil_test.py) | Hardware-in-the-loop checks against a target board |
-| [`sil_test.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/sil_test.py) | Software-in-the-loop logic validation |
-| [`api_testing_example.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/api_testing_example.py) | Service/API assertions with response payload checks |
-| [`ui_testing_example.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/ui_testing_example.py) | UI-style assertions for page state and user feedback |
-| [`cloud_e2e_example.py`](https://github.com/MbedLabs/bud/blob/main/budtestlibrary/budtestlibrary/examples/cloud_e2e_example.py) | Cloud / end-to-end test flow with latency checks |
+| [`minimal_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/minimal_test.py) | Smallest possible `BudTestCase` with all core assertions |
+| [`bloom_metadata_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/bloom_metadata_test.py) | Bloom PLM traceability metadata on test results |
+| [`flash_event_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/flash_event_example.py) | Firmware flashing with `FlashEvent`, `FlashSuccess`, and `FlashFailure` |
+| [`hil_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/hil_test.py) | Hardware-in-the-loop checks against a target board |
+| [`sil_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/sil_test.py) | Software-in-the-loop logic validation |
+| [`api_testing_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/api_testing_example.py) | Service/API assertions with response payload checks |
+| [`ui_testing_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/ui_testing_example.py) | UI-style assertions for page state and user feedback |
+| [`cloud_e2e_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/cloud_e2e_example.py) | Cloud / end-to-end test flow with latency checks |
 
 ## Compatibility
 
