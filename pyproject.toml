@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "budtestlibrary"
-version = "1.0.1"
+version = "1.0.2"
 description = "Universal Bud test automation framework for HIL, SIL, web, mobile, cloud, and end-to-end testing."
 readme = "README.md"
 license = {text = "AGPL-3.0-only"}
