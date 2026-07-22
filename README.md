@@ -1,27 +1,51 @@
 # budtestlibrary
 
-Universal test automation framework for HIL, SIL, Web, Mobile, Cloud, and E2E testing.
-It provides a comprehensive test framework with lifecycle management, rich assertions, logging, and Bloom PLM integration.
+Universal Python test automation framework for HIL, SIL, web, mobile, cloud,
+API, security, performance, and end-to-end testing.
+
+It provides lifecycle management, rich assertions, structured results, logging,
+firmware-flashing abstractions, and optional Bloom PLM integration through
+`BloomMetaData` attached to test classes.
 
 Creator: Amine El Omari
+
+## Requirements
+
+- Python 3.9 or later
+- No required runtime dependencies
 
 ## Installation
 
 ```bash
-pip install budtestlibrary
+python -m pip install budtestlibrary
 ```
 
-## Quick Start
+## Features
+
+- `BudTestCase` lifecycle with `setUpClass()` and `tearDownClass()`.
+- Automatic discovery of methods whose names start with `bud_`.
+- Boolean, equality, membership, range, tolerance, and regex assertions.
+- Structured assertion and test-method results.
+- Configurable source-location, traceback, and value capture.
+- Coloured console output and plain serialised result data.
+- Firmware flashing through `FlashEvent`, `FlashSuccess`, and `FlashFailure`.
+- Environment-variable and `app.properties` configuration.
+- Bundled examples for HIL, SIL, API, UI, cloud/E2E, and flashing scenarios.
+- Optional Bloom PLM traceability with `BloomMetaData`.
+
+## Quick start
 
 ```python
 import logging
-from budtestlibrary import BudTestCase, BloomMetaData
+
+from budtestlibrary import BloomMetaData, BudTestCase
+
 
 class MyTest(BudTestCase):
     bloom_metadata = BloomMetaData("PRJ", "001")  # Optional: attach Bloom traceability metadata
 
     def setUpClass(self):
-        self.log_info("Setting up test...")
+        self.log_info("Setting up test")
 
     def bud_check_response(self):
         response = get_response()
@@ -33,11 +57,12 @@ class MyTest(BudTestCase):
             result,
             expected=42.0,
             absolute_tolerance=0.5,
-            msg="Output within expected range",
+            msg="Output is within tolerance",
         )
 
     def tearDownClass(self):
-        self.log_info("Tearing down test...")
+        self.log_info("Tearing down test")
+
 
 if __name__ == "__main__":
     test = MyTest()
@@ -47,214 +72,202 @@ if __name__ == "__main__":
 
 ### Optional Bloom Traceability
 
-If you want Bud/Bloom traceability on reported results, add `BloomMetaData` to
-the test class:
+`BloomMetaData` optionally links a test class to a Bloom test case using the
+`{Project}-TC-{ID}` convention:
 
 ```python
-from budtestlibrary import BudTestCase, BloomMetaData
+from budtestlibrary import BloomMetaData, BudTestCase
+
 
 class TraceableTest(BudTestCase):
     bloom_metadata = BloomMetaData("PRJ", "001")
 ```
 
-## Configuration
+This integration is optional. Tests run normally without Bloom metadata or a
+Bloom deployment. When results flow through `bud_runner` into Bud, Bud uses the
+metadata when the corresponding Bud project is linked to Bloom.
 
-Configure via environment variables or `app.properties`:
+## Public API
 
-### Environment Variables
+| Export | Purpose |
+|---|---|
+| `BudTestCase` | Base class for lifecycle, assertions, logging, and results |
+| `BloomMetaData` | Optional Bloom PLM test-case traceability metadata |
+| `FlashEvent` | Abstract firmware-flashing operation |
+| `FlashSuccess` | Successful flashing result |
+| `FlashFailure` | Failed flashing result with error information |
+| `BudConfig` | Configuration loaded from environment and properties |
+| `get_default_config()` | Shared lazy-loaded configuration instance |
 
-```bash
-export BUD_BACKEND_URL="https://<your-bud-instance-url>/"
-export BUD_TOKEN="your-api-token"
+## Test structure
+
+`BudTestCase.run()` discovers methods prefixed with `bud_` and executes them in
+alphabetical order. Prefix methods numerically when explicit ordering matters:
+
+```python
+class OrderedTest(BudTestCase):
+    def bud_01_connect(self):
+        ...
+
+    def bud_02_measure(self):
+        ...
 ```
 
-### app.properties
+After execution, call `get_results()`:
 
-```properties
-budBackend=https://<your-bud-instance-url>/
-budRunnerAccount=my-runner
+```python
+test = MyTest()
+test.run()
+
+for method_result in test.get_results():
+    print(method_result.method_name, method_result.passed)
 ```
-
-## Examples
-
-Runnable example scenarios are **bundled with the package** and installed alongside it:
-
-```bash
-# Find the installed examples directory
-python -c "import budtestlibrary.examples; import pathlib; print(pathlib.Path(budtestlibrary.examples.__file__).parent)"
-```
-
-| File | Scenario |
-|------|----------|
-| `minimal_test.py` | Smallest possible `BudTestCase` with core assertions |
-| `bloom_metadata_test.py` | Bloom PLM traceability metadata on test results |
-| `flash_event_example.py` | Firmware flashing with `FlashEvent`, `FlashSuccess`, and `FlashFailure` |
-| `hil_test.py` | Hardware-in-the-loop checks against a target board |
-| `sil_test.py` | Software-in-the-loop logic validation |
-| `api_testing_example.py` | Service/API assertions with response payload checks |
-| `ui_testing_example.py` | UI-style assertions for page state and user feedback |
-| `cloud_e2e_example.py` | Cloud / end-to-end test flow with latency checks |
 
 ## Assertions
 
-### assertTrue / assertFalse
-```python
-self.assertTrue(condition, msg="Description", abort_on_fail=False)
-self.assertFalse(condition, msg="Description")
-```
+Available helpers include:
 
-### assertEqual / assertNotEqual
-```python
-self.assertEqual(actual, expected, msg="Description")
-self.assertNotEqual(actual, expected, msg="Description")
-```
+- `assertTrue` / `assertFalse`
+- `assertEqual` / `assertNotEqual`
+- `assertGreater` / `assertLess`
+- `assertIn` / `assertNotIn`
+- `assertRegex`
+- `assertInTolerance`
+- `assertInRange`
+- `skipAssert`
 
-### assertGreater / assertLess
-```python
-self.assertGreater(actual, expected, msg="Description")
-self.assertLess(actual, expected, msg="Description")
-```
+Example:
 
-### assertIn / assertNotIn
-```python
-self.assertIn(member=2, container=[1, 2, 3], msg="Description")
-self.assertNotIn(member=99, container=[1, 2, 3], msg="Description")
-```
-
-### assertRegex
-```python
-self.assertRegex(text="hello world", pattern=r"hello", msg="Description")
-```
-
-### assertInTolerance
-```python
-self.assertInTolerance(
-    actual,
-    expected,
-    absolute_tolerance=0.1,      # ±0.1
-    relative_tolerance=0.05,     # ±5%
-    msg="Description",
-)
-```
-
-### assertInRange
 ```python
 self.assertInRange(
-    actual,
-    lower_bound=0.0,
-    upper_bound=10.0,
+    actual=temperature,
+    lower_bound=18.0,
+    upper_bound=26.0,
     include_bounds=True,
-    msg="Description",
-)
-
-# upper_bound is optional — checks >= lower_bound when omitted
-self.assertInRange(
-    actual,
-    lower_bound=5.0,
-    msg="Description",
+    msg="Temperature is inside the accepted range",
 )
 ```
 
-## Result capture options
+## Result capture
 
-Subclass attributes on `BudTestCase` control what is stored in assertion and method results (and serialized via `to_dict()`):
+Subclass attributes control serialised result size and detail:
 
-| Attribute | Default | Description |
-|-----------|---------|-------------|
-| `CAPTURE_SOURCE_PATH` | `True` | When `True`, failed assertions record `source_file`, `source_line`, and `source_function` from the call site. Set to `False` to omit source location (smaller payloads, less introspection overhead). |
-| `CAPTURE_TRACEBACK` | `True` | When `True`, tracebacks are attached to failed assertions and method results where applicable. Set to `False` to omit traceback strings from stored results. |
-| `MAX_RESULT_VALUE_LENGTH` | `5000` | Maximum character length for `expected`, `actual`, and `result` strings in `TestResult.to_dict()`. Longer values are truncated with `"... <truncated>"`. |
+| Attribute | Default | Purpose |
+|---|---:|---|
+| `CAPTURE_SOURCE_PATH` | `True` | Capture failure source file and line |
+| `CAPTURE_TRACEBACK` | `True` | Capture traceback text |
+| `MAX_RESULT_VALUE_LENGTH` | `5000` | Truncate long expected/actual/result values |
 
 ```python
 class CompactResultsTest(BudTestCase):
     CAPTURE_SOURCE_PATH = False
     CAPTURE_TRACEBACK = False
     MAX_RESULT_VALUE_LENGTH = 500
-
-    def bud_check(self):
-        self.assertTrue(True, msg="minimal result payload")
 ```
 
-Default shared configuration (backend URLs, tokens) is available via `get_default_config()` from `budtestlibrary` or `budtestlibrary.config` — it is created on first use, not at import time.
+## Firmware flashing
 
-## Result and Flash Abstractions
-
-### TestMethodResult
-The result objects include detailed failure and summary messages:
-- `error_message`: Richly formatted with the exact assertion line when failed.
-- `summary_message`: Concisely summarizes the execution (e.g., "Passed: N assertion(s) in M.NNs" or mirrors `error_message` on failure).
-
-### FlashFailure
-Firmware flash results use a unified interface. `FlashFailure` defaults to a `message` key (matching `FlashSuccess`), while preserving a read-only `error_message` for backward compatibility. Its `to_dict()` keys include `message`, `error_message`, `error_code`, and `recoverable`.
-
-### FlashEvent
-Flash events accept a `firmware_path` parameter in both `flash()` and `execute()` methods:
+Implement `FlashEvent` for product-specific flashing:
 
 ```python
+from budtestlibrary import FlashEvent, FlashSuccess
+
+
 class MyFlashEvent(FlashEvent):
     def flash(self, firmware_path):
-        ...
-        return FlashSuccess()
+        perform_flash(firmware_path)
+        return FlashSuccess(message="Flashed successfully")
 
-event = MyFlashEvent()
-result = event.execute("/path/to/firmware.hex")
+    def get_project_name(self):
+        return "SensorHub"
+
+    def get_firmware_version(self):
+        return "2.1.0"
+
+    def get_release(self):
+        return "production"
 ```
 
-## Result Schema
+## Configuration
 
-`budtestlibrary` produces two primary result shapes:
+```bash
+export BUD_BACKEND_URL="https://<your-bud-instance-url>"
+export BUD_TOKEN="<user-token>"
+```
 
-### `TestResult`
+```properties
+budBackend=https://<your-bud-instance-url>
+budRunnerAccount=lab-station-01
+```
 
-One assertion-level record. Serialized keys include:
-- `passed`
-- `message`
-- `skipped`
-- `assertion_type`
-- `expected`
-- `actual`
-- `result`
-- `source_file`
-- `source_line`
-- `source_function`
-- `code_context`
-- `traceback`
-- `timestamp`
-- `metadata`
+Keep secrets outside repositories.
 
-### `TestMethodResult`
+## Bundled examples
 
-One `bud_*` method-level record. Serialized keys include:
-- `method_name`
-- `passed`
-- `skipped`
-- `assertions`
-- `duration_seconds`
-- `error_message`
-- `summary_message`
-- `traceback`
-- `metadata`
+Examples ship inside the wheel under `budtestlibrary.examples`.
 
-In a typical integration, `bud_runner` flattens these method-level results into
-the payload it uploads to Bud TMP while preserving assertion detail.
+```bash
+python -c "import budtestlibrary.examples, pathlib; print(pathlib.Path(budtestlibrary.examples.__file__).parent)"
+```
+
+| Example | Scenario |
+|---|---|
+| [`minimal_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/minimal_test.py) | Minimal test with core assertions |
+| [`bloom_metadata_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/bloom_metadata_test.py) | Optional Bloom traceability |
+| [`flash_event_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/flash_event_example.py) | Firmware flashing |
+| [`hil_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/hil_test.py) | Hardware-in-the-loop |
+| [`sil_test.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/sil_test.py) | Software-in-the-loop |
+| [`api_testing_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/api_testing_example.py) | API testing |
+| [`ui_testing_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/ui_testing_example.py) | UI testing |
+| [`cloud_e2e_example.py`](https://github.com/MbedLabs/bud-test-library/blob/main/budtestlibrary/examples/cloud_e2e_example.py) | Cloud and E2E testing |
 
 ## Compatibility
 
 | `budtestlibrary` | Intended `bud_runner` pairing | Notes |
-|------------------|--------------------------------|-------|
-| `1.0.1` | `1.0.0.post2` | Examples bundled in wheel; no API changes |
-| `1.0.0.post2` | `1.0.0.post2` | Supports configurable traceback/source capture, result truncation, `FlashEvent`, and separate `test_software` vs `software_under_test` metadata in the runner flow |
+|---|---|---|
+| `1.0.2` | `1.0.2` | Permanent AGPL wording clarified; examples and README coverage expanded |
+| `1.0.1` | `1.0.1` | Examples bundled in the wheel |
+| `1.0.0.post2` | `1.0.0.post2` | Configurable capture, flashing abstractions, and separated test-software metadata |
 
-## Related Packages
+## Development
 
-- **bud_runner**: CLI tool for test execution and CI/CD integration
-- **pybudgui**: A python-based Qt desktop client for manual test execution, planned on the roadmap.  
+```bash
+git clone https://github.com/MbedLabs/bud-test-library.git
+cd bud-test-library
+python -m pip install -e ".[dev]"
 
-## License
+black --check budtestlibrary/ examples/
+isort --profile black --check-only budtestlibrary/ examples/
+ruff check budtestlibrary/ examples/
+mypy budtestlibrary/
+pytest tests/ -v
+```
 
-This project is licensed under the **GNU Affero General Public License v3.0
-(AGPL-3.0)**. Full license text: https://www.gnu.org/licenses/agpl-3.0.html
+## Related packages
 
-Copyright (C) 2026 EmbedLabs.
+- **bud_runner**: CLI tool for test execution and Bud integration.
+- **pybudgui**: Python Qt desktop client for manual test execution, planned on the roadmap.
 
-For commercial licensing options that do not require AGPL compliance, contact dev@embedlabs.net. For support or private-source collaboration, email dev@embedlabs.net.
+## Licence
+
+`budtestlibrary` is permanent free and open-source software licensed under the
+**GNU Affero General Public License v3.0 only (`AGPL-3.0-only`)**.
+
+No paid EmbedLabs licence is required to use `budtestlibrary`, including for
+commercial use, provided the AGPL terms are followed. Accepted community
+contributions remain publicly available under `AGPL-3.0-only` and will not
+become proprietary-only.
+
+Bud and Bloom are separate source-available applications. Commercial licensing,
+deployment, integration, and support offered through `sales@embedlabs.de`
+applies to those applications and services—not to the `budtestlibrary` package
+licence.
+
+Technical, security, and contribution questions: `dev@embedlabs.net`.
+
+Copyright (C) 2026 Mohamed Amine El Omari Alaoui, operating under the name
+EmbedLabs.
+
+- [Full licence](https://github.com/MbedLabs/bud-test-library/blob/main/LICENSE)
+- [Contributing](https://github.com/MbedLabs/bud-test-library/blob/main/CONTRIBUTING.md)
+- [Contributor License Agreement](https://github.com/MbedLabs/bud-test-library/blob/main/CLA.md)
