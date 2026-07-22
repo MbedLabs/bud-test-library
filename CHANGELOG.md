@@ -5,72 +5,75 @@ All notable changes to `budtestlibrary` will be documented in this file.
 ## [1.0.2] — 2026-07-22
 
 ### Changed
-- README expanded: table of contents, public API, test structure, logging, `skipAssert`, `get_results()`, `BudConfig`, and development setup sections added
-- Commercial licensing wording updated to explicitly clarify and reference the hosted Bud (Test Management Platform) and Bloom (Product Lifecycle Management) applications; contact now `sales@embedlabs.de`
+- README expanded with public API, lifecycle, assertions, result capture, configuration, examples, and development guidance
+- Optional Bloom PLM integration remains documented through `BloomMetaData`
+- Package licensing wording now explicitly confirms that `budtestlibrary` remains free and open source under `AGPL-3.0-only`, including for commercial use subject to AGPL compliance
+- Bud and Bloom application licensing is clearly separated from the `budtestlibrary` package licence
+- Contributor terms now guarantee that Accepted Contributions remain publicly available under `AGPL-3.0-only`
+- Pull requests now include an explicit CLA acceptance declaration
 
 ### Added
-- Test coverage for all bundled `budtestlibrary.examples` modules — import, run-as-script, and result validation
-- `#`-prefixed anchor links allowed in README relative-link validation (PyPI supports same-page anchors)
+- Test coverage for bundled `budtestlibrary.examples` modules, including import, script execution, and result validation
+- `#`-prefixed anchor links allowed in README relative-link validation for PyPI compatibility
 
 ## [1.0.1] — 2026-07-19
 
 ### Changed
-- Examples are now bundled inside the wheel as `budtestlibrary.examples` sub-package — previously only available in the source distribution
-- README updated with instructions on locating installed examples
+- Examples are bundled inside the wheel as the `budtestlibrary.examples` subpackage
+- README includes instructions for locating installed examples
 
 ## [1.0.0.post2] — 2026-06-28
 
 ### Changed
-- Package version advanced to `1.0.0.post2` for the final public metadata and documentation corrections
+- Package version advanced to `1.0.0.post2` for final public metadata and documentation corrections
 - Project URLs now point to `embedlabs.net`
-- Quick-start example keeps the original lifecycle flow and marks `BloomMetaData` optional inline
-- Separate optional Bloom traceability section remains documented in the README
+- Quick-start example marks `BloomMetaData` as optional
+- Optional Bloom traceability remains documented separately
 
 ## [1.0.0.post1] — 2026-06-28
 
 ### Changed
-- Package version advanced to `1.0.0.post1` for a docs-only PyPI metadata correction
+- Package version advanced to `1.0.0.post1` for a documentation-only PyPI correction
 - Package author metadata now credits Amine El Omari
-- README now credits the creator and marks the Qt desktop client as roadmap-only
+- README credits the creator and marks the Qt desktop client as roadmap-only
 
 ## [1.0.0] — 2026-06-28
 
 ### Added
-- Release metadata regression coverage for version, license metadata, and changelog alignment
+- Release metadata regression coverage for version, licence metadata, and changelog alignment
 
 ### Changed
 - Package version advanced to `1.0.0`
-- Packaging metadata now uses a PEP 621-compatible license table
+- Packaging metadata now uses a PEP 621-compatible licence table
 - Release classifier moved from beta to production/stable
-- Runtime version resolution now prefers installed package metadata before falling back to local source metadata
+- Runtime version resolution prefers installed package metadata before local source metadata
 
 ## [0.3.0] — 2026-05-20
 
 ### Added
-- New assertion methods: `assertFalse`, `assertNotEqual`, `assertGreater`, `assertLess`, `assertRegex`
-- Configurable source path capture via `CAPTURE_SOURCE_PATH` class attribute
-- Configurable traceback capture via `CAPTURE_TRACEBACK` class attribute
-- `BloomMetaData` field validation (non-empty project/tc_id_suffix, alphanumeric suffix format)
-- Result value truncation to prevent bloated reports (default max 5000 chars)
+- New assertion methods: `assertFalse`, `assertNotEqual`, `assertGreater`, `assertLess`, and `assertRegex`
+- Configurable source path and traceback capture
+- `BloomMetaData` validation
+- Result value truncation
 
 ### Changed
-- **Breaking**: `FlashFailure.message` is now a required positional argument (no longer defaults to "Flash failed")
-- `BloomMetaData.get_url()` accepts a configurable `base_url` parameter
-- `assertIn` / `assertNotIn` now raise `TypeError` for non-container arguments
+- `FlashFailure.message` became a required positional argument
+- `BloomMetaData.get_url()` accepts a configurable base URL
+- `assertIn` and `assertNotIn` raise `TypeError` for non-container arguments
 
 ### Fixed
-- `assertInTolerance` with `absolute_tolerance=0` now correctly requires exact match (previously `0` was falsy and fell through to relative tolerance calculation)
-- `BudTestCase` no longer mutates the root logger — uses its own `budtestlibrary.ClassName` logger with `propagate=False`
-- Serialized result output (`to_dict()`) remains plain text — ANSI color codes only appear in console output
+- Zero absolute tolerance now requires an exact match
+- `BudTestCase` no longer mutates the root logger
+- Serialised result output remains plain text
 
 ### Removed
-- `FlashStatus` enum removed from `FlashResult`; use `is_success()` instead (status is derived, not stored)
+- `FlashStatus`; use `is_success()` instead
 
 ## [0.2.0] — 2025
 
 ### Added
 - Initial public release
-- `BudTestCase` with lifecycle, assertions, and logging
-- `BloomMetaData` for Bloom PLM integration
-- `FlashEvent` abstraction for firmware flashing
-- Environment variable and `app.properties` configuration
+- `BudTestCase` lifecycle, assertions, and logging
+- `BloomMetaData` for optional Bloom PLM integration
+- `FlashEvent` firmware-flashing abstraction
+- Environment-variable and `app.properties` configuration
