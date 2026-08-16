@@ -174,8 +174,10 @@ from budtestlibrary import FlashEvent, FlashSuccess
 
 
 class MyFlashEvent(FlashEvent):
-    def flash(self, firmware_path):
-        perform_flash(firmware_path)
+    DEFAULT_ADDR = 0x08000000
+
+    def flash(self, firmware_path, addr=None):
+        perform_flash(firmware_path, self.DEFAULT_ADDR if addr is None else addr)
         return FlashSuccess(message="Flashed successfully")
 
     def get_project_name(self):
@@ -187,6 +189,21 @@ class MyFlashEvent(FlashEvent):
     def get_release(self):
         return "production"
 ```
+
+`addr` is the optional target memory address (for example `0x08000000` on
+STM32, `0x10000` on ESP32). Pass it through `execute()` when a run needs a
+specific address, and omit it to use the implementation's default:
+
+```python
+event = MyFlashEvent()
+event.execute("firmware.bin")                     # implementation default
+event.execute("bootloader.bin", addr=0x08000000)  # explicit address
+```
+
+Implementations that do not need an address may keep the single-argument
+`flash(self, firmware_path)` signature — `execute()` detects this and calls
+them unchanged. Passing an explicit `addr` to such an implementation returns a
+`FlashFailure` explaining that `addr=None` must be added to its signature.
 
 ## Configuration
 
