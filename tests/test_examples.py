@@ -1,12 +1,29 @@
 """Verify that all bundled example modules import and run successfully."""
 
 import logging
+import os
 import subprocess
 from pathlib import Path
 
 import pytest
 
-EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "budtestlibrary" / "examples"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+EXAMPLES_DIR = REPO_ROOT / "budtestlibrary" / "examples"
+
+
+def _subprocess_env() -> dict:
+    """
+    Environment that makes examples resolve budtestlibrary from this repo.
+
+    Running `python3 <example>.py` puts the examples directory on sys.path,
+    not the repo root, so `import budtestlibrary` would otherwise pick up any
+    installed copy in site-packages and test a stale version of the library.
+    """
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = f"{REPO_ROOT}{os.pathsep}{existing}" if existing else str(REPO_ROOT)
+    return env
+
 
 EXPECTED_EXAMPLE_MODULES = [
     "minimal_test",
@@ -83,6 +100,7 @@ class TestExampleRuns:
             capture_output=True,
             text=True,
             timeout=30,
+            env=_subprocess_env(),
         )
         assert result.returncode == 0, (
             f"Example {module_name} exited with code {result.returncode}\n"

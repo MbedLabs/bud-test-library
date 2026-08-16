@@ -65,6 +65,44 @@ class ExplodingFlashEvent(FlashEvent):
         return "broken"
 
 
+class AddressAwareFlashEvent(FlashEvent):
+    """A flash event that accepts an optional target address."""
+
+    DEFAULT_ADDR = 0x08000000
+
+    def flash(self, firmware_path, addr=None):
+        target_addr = self.DEFAULT_ADDR if addr is None else addr
+        return FlashSuccess(
+            message=f"Flashed {firmware_path} at 0x{target_addr:X}",
+            metadata={"addr": target_addr},
+        )
+
+    def get_project_name(self):
+        return "AddrProject"
+
+    def get_firmware_version(self):
+        return "1.0.0"
+
+    def get_release(self):
+        return "development"
+
+
+class VarKwargsFlashEvent(FlashEvent):
+    """A flash event that absorbs extra arguments via **kwargs."""
+
+    def flash(self, firmware_path, **kwargs):
+        return FlashSuccess(metadata={"addr": kwargs.get("addr")})
+
+    def get_project_name(self):
+        return "KwargsProject"
+
+    def get_firmware_version(self):
+        return "1.0.0"
+
+    def get_release(self):
+        return "development"
+
+
 class TestFlashSuccess:
     def test_default_message(self):
         fs = FlashSuccess()
@@ -148,6 +186,52 @@ class TestFlashEventExecute:
         result = event.execute("/path/to/firmware.bin")
         assert result.duration_seconds is not None
         assert result.duration_seconds >= 0
+
+
+class TestFlashEventAddr:
+    def test_addr_is_optional_and_defaults_to_none(self):
+        event = AddressAwareFlashEvent()
+        result = event.execute("/path/to/firmware.bin")
+        assert result.is_success()
+        assert result.metadata["addr"] == AddressAwareFlashEvent.DEFAULT_ADDR
+
+    def test_addr_forwarded_as_keyword(self):
+        event = AddressAwareFlashEvent()
+        result = event.execute("/path/to/firmware.bin", addr=0x08020000)
+        assert result.is_success()
+        assert result.metadata["addr"] == 0x08020000
+        assert "0x8020000" in result.message
+
+    def test_addr_forwarded_as_positional(self):
+        event = AddressAwareFlashEvent()
+        result = event.execute("/path/to/firmware.bin", 0x08020000)
+        assert result.metadata["addr"] == 0x08020000
+
+    def test_flash_called_directly_without_addr(self):
+        event = AddressAwareFlashEvent()
+        result = event.flash("/path/to/firmware.bin")
+        assert result.metadata["addr"] == AddressAwareFlashEvent.DEFAULT_ADDR
+
+    def test_legacy_signature_still_works(self):
+        """Subclasses without an `addr` parameter keep working unchanged."""
+        event = StubFlashEvent()
+        assert event._flash_accepts_addr() is False
+        result = event.execute("/path/to/firmware.bin")
+        assert result.is_success()
+
+    def test_legacy_signature_rejects_explicit_addr(self):
+        event = StubFlashEvent()
+        result = event.execute("/path/to/firmware.bin", addr=0x08000000)
+        assert isinstance(result, FlashFailure)
+        assert not result.recoverable
+        assert "does not accept an 'addr' keyword argument" in result.message
+        assert "StubFlashEvent" in result.message
+
+    def test_var_kwargs_signature_receives_addr(self):
+        event = VarKwargsFlashEvent()
+        assert event._flash_accepts_addr() is True
+        result = event.execute("/path/to/firmware.bin", addr=0x1000)
+        assert result.metadata["addr"] == 0x1000
 
 
 class TestFlashEventInfo:
