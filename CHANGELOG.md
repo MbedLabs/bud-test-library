@@ -2,6 +2,22 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [1.0.3] — 2026-08-16
+
+### Added
+- `FlashEvent.flash()` and `FlashEvent.execute()` accept an optional `addr`
+  target memory address (e.g. `0x08000000` on STM32, `0x10000` on ESP32);
+  `None` means the implementation's platform default
+- Test coverage for the optional `addr` argument, including positional and
+  keyword forwarding and legacy-signature compatibility
+
+### Changed
+- `execute()` detects whether an implementation's `flash()` accepts `addr`.
+  Existing `flash(self, firmware_path)` subclasses keep working unchanged;
+  passing an explicit `addr` to one returns a `FlashFailure` naming the class
+  and the required signature change
+- `flash_event_example` and README document the optional `addr` argument
+
 ## [1.0.2] — 2026-07-22
 
 ### Changed

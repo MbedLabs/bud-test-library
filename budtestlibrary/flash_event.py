@@ -6,8 +6,8 @@ functionality across different hardware platforms.
 
 Usage:
     class MyFlashEvent(FlashEvent):
-        def flash(self, firmware_path):
-            # Perform flashing
+        def flash(self, firmware_path, addr=None):
+            # Perform flashing, defaulting the target address when omitted
             if success:
                 return FlashSuccess()
             else:
@@ -21,8 +21,13 @@ Usage:
 
         def get_release(self) -> str:
             return "production"
+
+`addr` is optional everywhere: implementations that do not need a target
+address may keep the single-argument `flash(self, firmware_path)` signature,
+and `execute()` will call them unchanged.
 """
 
+import inspect
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -161,7 +166,7 @@ class FlashEvent(ABC):
         self._result: Optional[FlashResult] = None
 
     @abstractmethod
-    def flash(self, firmware_path: str) -> FlashResult:
+    def flash(self, firmware_path: str, addr: Optional[int] = None) -> FlashResult:
         """
         Perform the firmware flash operation.
 
@@ -173,12 +178,39 @@ class FlashEvent(ABC):
 
         Args:
             firmware_path: Path to the firmware file to flash.
+            addr: Optional target memory address to program at
+                (e.g. 0x08000000 on STM32, 0x10000 on ESP32). When None,
+                the implementation should use its platform default or the
+                address embedded in the firmware image.
 
         Returns:
             FlashSuccess if the flash completed successfully.
             FlashFailure if the flash failed, with error details.
         """
         pass
+
+    def _flash_accepts_addr(self) -> bool:
+        """
+        Check whether this implementation's flash() accepts `addr` by keyword.
+
+        Subclasses written against earlier versions of this library define
+        `flash(self, firmware_path)` only. Those keep working: execute()
+        calls them without `addr`.
+        """
+        try:
+            parameters = inspect.signature(self.flash).parameters
+        except (TypeError, ValueError):  # pragma: no cover - exotic callables
+            return True
+
+        for parameter in parameters.values():
+            if parameter.kind is parameter.VAR_KEYWORD:
+                return True
+            if parameter.name == "addr" and parameter.kind in (
+                parameter.POSITIONAL_OR_KEYWORD,
+                parameter.KEYWORD_ONLY,
+            ):
+                return True
+        return False
 
     @abstractmethod
     def get_project_name(self) -> str:
@@ -210,7 +242,7 @@ class FlashEvent(ABC):
         """
         pass
 
-    def execute(self, firmware_path: str) -> FlashResult:
+    def execute(self, firmware_path: str, addr: Optional[int] = None) -> FlashResult:
         """
         Execute the flash operation with timing.
 
@@ -219,6 +251,8 @@ class FlashEvent(ABC):
 
         Args:
             firmware_path: Path to the firmware file to flash.
+            addr: Optional target memory address, forwarded to flash().
+                Omit it to let the implementation choose its default.
 
         Returns:
             FlashResult with success or failure details.
@@ -226,7 +260,16 @@ class FlashEvent(ABC):
         self._start_time = datetime.now()
 
         try:
-            self._result = self.flash(firmware_path)
+            if self._flash_accepts_addr():
+                self._result = self.flash(firmware_path, addr=addr)
+            elif addr is None:
+                self._result = self.flash(firmware_path)
+            else:
+                raise TypeError(
+                    f"{type(self).__name__}.flash() does not accept an 'addr' "
+                    "keyword argument; add 'addr=None' to its signature to "
+                    "flash at a specific address"
+                )
         except Exception as e:
             self._result = FlashFailure(
                 message=f"Unexpected error: {str(e)}",
