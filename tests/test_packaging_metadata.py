@@ -12,10 +12,16 @@ def _pyproject() -> dict:
     return tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
+def test_the_declared_version_is_a_release_number() -> None:
+    """Pinned as a shape, not a literal: a literal is a hand edit every release."""
+    project = _pyproject()["project"]
+
+    assert re.fullmatch(r"\d+\.\d+\.\d+", project["version"]), project["version"]
+
+
 def test_release_metadata_is_ready_for_1_0_0() -> None:
     project = _pyproject()["project"]
 
-    assert project["version"] == "1.0.3"
     assert project["authors"] == [
         {"name": "EmbedLabs", "email": "dev@embedlabs.net"},
         {"name": "Amine El Omari"},
