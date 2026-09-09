@@ -8,8 +8,7 @@ import pytest
 from budtestlibrary.__main__ import main
 from budtestlibrary.traceability import collect
 
-TRACED = dedent(
-    """
+TRACED = dedent("""
     from budtestlibrary import BloomMetaData, BudTestCase
 
 
@@ -18,19 +17,16 @@ TRACED = dedent(
 
         def test_it(self):
             pass
-    """
-)
+    """)
 
-UNTRACED = dedent(
-    """
+UNTRACED = dedent("""
     from budtestlibrary import BudTestCase
 
 
     class {name}(BudTestCase):
         def test_it(self):
             pass
-    """
-)
+    """)
 
 
 @pytest.fixture
