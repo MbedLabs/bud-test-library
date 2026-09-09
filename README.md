@@ -87,6 +87,36 @@ This integration is optional. Tests run normally without Bloom metadata or a
 Bloom deployment. When results flow through `bud_runner` into Bud, Bud uses the
 metadata when the corresponding Bud project is linked to Bloom.
 
+### Checking what a suite claims
+
+A `tc_id` is typed by hand. If it is wrong, Bloom reports it as unmatched, Bud
+records a warning on the run, and nothing else happens — the run is green and the
+test case reads as never executed. If two classes claim the same id, Bud coalesces
+them into one result and one outcome silently replaces the other.
+
+```bash
+budtestlibrary check tests/
+```
+
+It imports the modules under that path, reads the id each test class claims, and
+reports duplicates, classes claiming nothing, and modules it could not import. It
+exits non-zero on a duplicate, so CI fails on the error rather than on a report
+nobody reads.
+
+```
+✗ FLT-TC-001 is claimed by 2 test classes:
+    tests/test_brakes.py::BrakePressureTest
+    tests/test_thermal.py::ThermalSoakTest
+
+2 test class(es): 2 claim 1 Bloom test case(s), 0 claim none, 1 id(s) duplicated.
+```
+
+`--list` prints the `tc_id` to test class map, `--json` emits the same report for a
+pipeline, and `--strict` also fails when a test class claims no Bloom test case.
+
+The command talks to nothing. It cannot tell whether `FLT-TC-001` exists in Bloom,
+because this library holds no Bloom address and no credential.
+
 ## Public API
 
 | Export | Purpose |
@@ -98,6 +128,7 @@ metadata when the corresponding Bud project is linked to Bloom.
 | `FlashFailure` | Failed flashing result with error information |
 | `BudConfig` | Configuration loaded from environment and properties |
 | `get_default_config()` | Shared lazy-loaded configuration instance |
+| `budtestlibrary check` | Command that reports the Bloom test cases a suite claims |
 
 ## Test structure
 
