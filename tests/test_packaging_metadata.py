@@ -37,10 +37,11 @@ def test_release_metadata_is_ready_for_1_0_0() -> None:
     assert "Development Status :: 5 - Production/Stable" in project["classifiers"]
 
 
-def test_changelog_has_1_0_0_entry() -> None:
+def test_the_changelog_has_an_entry_for_the_declared_version() -> None:
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    version = _pyproject()["project"]["version"]
 
-    assert "## [1.0.3]" in changelog
+    assert f"## [{version}]" in changelog
 
 
 def test_readme_credits_creator_and_marks_qt_client_as_roadmap_only() -> None:
