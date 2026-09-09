@@ -2,6 +2,16 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [1.1.0] — 2026-09-09
+
+### Added
+- `budtestlibrary check <path>` reports the Bloom test cases a suite claims, before it runs. A `tc_id` is typed by hand, and a wrong one is only noticed after the fact: Bloom returns it as unmatched, Bud records a warning on the run, and the run stays green while the test case reads as never executed. A duplicate is quieter still — two classes claiming one id are coalesced into a single result, and one outcome replaces the other. The command reports both, along with classes that claim nothing and modules it could not import, and exits non-zero on a duplicate so a pipeline fails on the error. `--list` prints the `tc_id` to test class map, `--json` emits it for CI, `--strict` also fails on an untraced class.
+
+  It talks to nothing, and cannot tell whether an id exists in Bloom: this library holds no Bloom address and no credential.
+
+### Changed
+- The packaging test pins the version as a release number rather than a literal, which was a hand edit every release.
+
 ## [1.0.3] — 2026-08-16
 
 ### Added
