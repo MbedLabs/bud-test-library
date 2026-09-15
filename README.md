@@ -273,6 +273,7 @@ python -c "import budtestlibrary.examples, pathlib; print(pathlib.Path(budtestli
 
 | `budtestlibrary` | Intended `bud_runner` pairing | Notes |
 |---|---|---|
+| `1.1.0` | `1.1.0` | Updated compatibility matrix |
 | `1.0.3` | `1.0.3` | Optional `addr` target address on `FlashEvent.flash()` and `FlashEvent.execute()` |
 | `1.0.2` | `1.0.2` | Permanent AGPL wording clarified; examples and README coverage expanded |
 | `1.0.1` | `1.0.1` | Examples bundled in the wheel |
