@@ -23,7 +23,7 @@ python -m pip install budtestlibrary
 ## Features
 
 - `BudTestCase` lifecycle with `setUpClass()` and `tearDownClass()`.
-- Automatic discovery of methods whose names start with `bud_`.
+- Automatic discovery of methods whose names start with `bud_`, run in declaration order.
 - Boolean, equality, membership, range, tolerance, and regex assertions.
 - Structured assertion and test-method results.
 - Configurable source-location, traceback, and value capture.
@@ -133,16 +133,23 @@ because this library holds no Bloom address and no credential.
 ## Test structure
 
 `BudTestCase.run()` discovers methods prefixed with `bud_` and executes them in
-alphabetical order. Prefix methods numerically when explicit ordering matters:
+the order they are declared in the class. No numeric prefixes are needed:
 
 ```python
 class OrderedTest(BudTestCase):
-    def bud_01_connect(self):
+    def bud_connect(self):
         ...
 
-    def bud_02_measure(self):
+    def bud_measure(self):
+        ...
+
+    def bud_disconnect(self):
         ...
 ```
+
+A subclass's own `bud_` methods run first, then the ones it inherits, base class
+by base class. A method that overrides an inherited one runs in the subclass's
+position.
 
 After execution, call `get_results()`:
 

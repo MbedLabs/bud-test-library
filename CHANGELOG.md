@@ -2,6 +2,11 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- `bud_` methods run in the order they are declared in the test class instead of alphabetical order, so numeric prefixes are no longer needed to order steps. A subclass's own methods run before inherited ones; an override runs in the subclass's position. A suite whose methods are declared in a different order than their alphabetical one now runs in the declared order. Methods are found on the class and its bases; a `bud_` attribute set on an instance is no longer run.
+
 ## [1.1.0] — 2026-09-09
 
 ### Added

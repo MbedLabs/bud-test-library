@@ -281,13 +281,22 @@ class BudTestCase(ABC):  # noqa: B024
         return all_passed
 
     def _discover_test_methods(self) -> list[tuple]:
+        """Return (name, bound method) for each bud_* method in declaration order.
+
+        The class's own methods come first, then those inherited from each base
+        class in method resolution order; an override keeps the subclass position.
+        """
         methods = []
-        for name in dir(self):
-            if name.startswith("bud_"):
+        seen: set[str] = set()
+        for cls in type(self).__mro__:
+            for name in vars(cls):
+                if not name.startswith("bud_") or name in seen:
+                    continue
+                seen.add(name)
                 method = getattr(self, name)
                 if callable(method):
                     methods.append((name, method))
-        return sorted(methods, key=lambda x: x[0])
+        return methods
 
     def _format_assertion_line(
         self, assertion_type: str, msg: str, expected: Any, actual: Any
