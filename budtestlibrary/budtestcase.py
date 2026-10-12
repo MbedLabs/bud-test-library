@@ -866,6 +866,50 @@ class BudTestCase(ABC):  # noqa: B024
             **kwargs,
         )
 
+    def waitUntil(
+        self,
+        condition_fn: Callable[[], bool],
+        timeout: float = 10.0,
+        poll_interval: float = 0.5,
+        msg: str = "",
+        abort_on_fail: bool = False,
+    ) -> bool:
+        """Poll condition_fn until it returns True or timeout seconds pass.
+
+        Records an AssertWaitUntil entry whose metadata holds elapsed_seconds,
+        timeout_seconds and poll_interval_seconds. An exception raised by
+        condition_fn counts as not yet true; on timeout the last one is recorded
+        as last_exception.
+        """
+        start = time.monotonic()
+        last_exception: Optional[Exception] = None
+        while True:
+            try:
+                met = bool(condition_fn())
+            except Exception as e:
+                met = False
+                last_exception = e
+            elapsed = time.monotonic() - start
+            if met or elapsed >= timeout:
+                break
+            time.sleep(min(poll_interval, timeout - elapsed))
+        metadata: dict[str, Any] = {
+            "elapsed_seconds": round(elapsed, 3),
+            "timeout_seconds": timeout,
+            "poll_interval_seconds": poll_interval,
+        }
+        if not met and last_exception is not None:
+            metadata["last_exception"] = f"{type(last_exception).__name__}: {last_exception}"
+        return self.assertTrue(
+            met,
+            msg=msg,
+            expected=f"condition true within {timeout}s",
+            actual=f"{'true' if met else 'not true'} after {elapsed:.3f}s",
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertWaitUntil",
+            **metadata,
+        )
+
     def _truncate_value(self, value: str) -> str:
         """Truncate a value string to MAX_RESULT_VALUE_LENGTH."""
         if len(value) > self.MAX_RESULT_VALUE_LENGTH:

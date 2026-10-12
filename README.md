@@ -235,6 +235,7 @@ Available helpers include:
 - `assertInRange`
 - `assertRaises` (context manager)
 - `require` (precondition that stops the step when false)
+- `waitUntil` (polls a condition until it is true or a timeout passes)
 - `skipAssert`
 
 Example:
@@ -255,6 +256,16 @@ fail on the missing prerequisite:
 
 ```python
 self.require(connection is not None, msg="Connection is open")
+```
+
+`waitUntil` polls a condition every `poll_interval` seconds until it returns
+true or `timeout` seconds pass, and records an `AssertWaitUntil` entry with
+`elapsed_seconds`, `timeout_seconds` and `poll_interval_seconds` in its metadata.
+It returns whether the condition was met. An exception from the condition counts
+as not yet true; on timeout the last one is recorded as `last_exception`:
+
+```python
+self.waitUntil(lambda: board.is_booted(), timeout=30.0, poll_interval=0.5, msg="Board boots")
 ```
 
 `assertRaises` checks that a block raises an exception. If the block raises

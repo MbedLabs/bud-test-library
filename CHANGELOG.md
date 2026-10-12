@@ -5,6 +5,7 @@ All notable changes to `budtestlibrary` will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `waitUntil(condition_fn, timeout=10.0, poll_interval=0.5, msg="", abort_on_fail=False)` polls a condition until it is true or the timeout passes, returns whether it was met and records an `AssertWaitUntil` entry with `elapsed_seconds`, `timeout_seconds` and `poll_interval_seconds` in its metadata. An exception from the condition counts as not yet true; on timeout the last one is recorded as `last_exception`.
 - `require(condition, msg="", **kwargs)` records an `AssertRequire` entry and, when the condition is false, raises `AssertionError` so the step stops at once.
 - `assertRaises(expected_exception, msg="", abort_on_fail=False)` context manager records an `AssertRaises` entry: passed when the block raises the expected exception (or a subclass), failed when it raises nothing or a different exception, which is then suppressed. With `abort_on_fail=True` a failure raises `AssertionError`. An unexpected exception that is not an `Exception` subclass (such as `KeyboardInterrupt`, `SystemExit` or `asyncio.CancelledError`) passes through unrecorded.
 - `async def bud_` steps, parameterized ones included, run to completion with `asyncio.run()`; their assertions and unhandled exceptions are recorded like those of any step. A step called from inside an already running event loop fails with the `RuntimeError` from `asyncio.run()`.
