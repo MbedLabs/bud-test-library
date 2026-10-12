@@ -12,6 +12,7 @@ import functools
 import inspect
 import logging
 import re
+import sys
 import time
 import traceback
 from abc import ABC
@@ -19,6 +20,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from types import FrameType
 from typing import Any, Callable, Optional
 
 from budtestlibrary.config import BudConfig
@@ -190,6 +192,18 @@ def _parameter_id(item: Any) -> str:
     if isinstance(item, dict):
         return ", ".join(f"{key}={value}" for key, value in item.items())
     return str(item)
+
+
+_LIBRARY_FILE = Path(__file__).resolve()
+
+
+@functools.cache
+def _is_library_file(filename: str) -> bool:
+    """Return True when filename is this module's own source file."""
+    try:
+        return Path(filename).resolve() == _LIBRARY_FILE
+    except OSError:
+        return Path(filename) == _LIBRARY_FILE
 
 
 def _is_coroutine_step(method: Callable) -> bool:
@@ -509,7 +523,7 @@ class BudTestCase(ABC):  # noqa: B024
         assertion_type: str = "AssertTrue",
         **kwargs,
     ) -> bool:
-        callsite = self._get_assertion_callsite()
+        callsite = self._get_assertion_callsite(failed=not condition)
         result = TestResult(
             passed=bool(condition),
             message=msg,
@@ -521,7 +535,7 @@ class BudTestCase(ABC):  # noqa: B024
             source_line=callsite.get("source_line"),
             source_function=callsite.get("source_function"),
             code_context=callsite.get("code_context"),
-            traceback=callsite.get("traceback") if not condition else None,
+            traceback=callsite.get("traceback"),
             metadata=kwargs,
             max_result_value_length=self.MAX_RESULT_VALUE_LENGTH,
         )
@@ -544,32 +558,34 @@ class BudTestCase(ABC):  # noqa: B024
 
         return condition
 
-    def _get_assertion_callsite(self) -> dict[str, Any]:
-        if not self.CAPTURE_SOURCE_PATH:
-            callsite = {}
-        else:
-            library_file = Path(__file__).resolve()
-            stack = inspect.stack(context=3)
-            selected = stack[2] if len(stack) > 2 else stack[-1]
-            for frame in stack[1:]:
-                try:
-                    frame_file = Path(frame.filename).resolve()
-                except OSError:
-                    frame_file = Path(frame.filename)
-                if frame_file != library_file:
+    def _get_assertion_callsite(self, failed: bool = False) -> dict[str, Any]:
+        """Return source file, line and function of the first caller outside the library.
+
+        Code context and, with CAPTURE_TRACEBACK, the traceback are added only for a
+        failed assertion.
+        """
+        callsite: dict[str, Any] = {}
+        if self.CAPTURE_SOURCE_PATH:
+            frame: Optional[FrameType] = sys._getframe(1)
+            selected = None
+            while frame is not None:
+                if not _is_library_file(frame.f_code.co_filename):
                     selected = frame
                     break
+                frame = frame.f_back
+            if selected is None:
+                selected = sys._getframe(2)
             callsite = {
-                "source_file": selected.filename,
-                "source_line": selected.lineno,
-                "source_function": selected.function,
-                "code_context": (
-                    "".join(selected.code_context).strip() if selected.code_context else None
-                ),
+                "source_file": selected.f_code.co_filename,
+                "source_line": selected.f_lineno,
+                "source_function": selected.f_code.co_name,
             }
+            if failed:
+                context = inspect.getframeinfo(selected, context=3).code_context
+                callsite["code_context"] = "".join(context).strip() if context else None
 
-        if self.CAPTURE_TRACEBACK:
-            callsite["traceback"] = "".join(traceback.format_stack()[:-1]).strip()
+        if failed and self.CAPTURE_TRACEBACK:
+            callsite["traceback"] = "".join(traceback.format_stack(sys._getframe(1))).strip()
 
         return callsite
 

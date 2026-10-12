@@ -10,6 +10,7 @@ All notable changes to `budtestlibrary` will be documented in this file.
 - `@parameterized(data)` runs a `bud_` method once per data item as separate steps named `<method>[<id>]`, each with its own result; a single value is passed as one argument, a tuple as positional arguments, a dict as keyword arguments. A failing item does not stop the others. Step names must be unique and at most 255 characters; a repeated or longer name fails the run after `setUpClass()` and before any step executes. Exported from `budtestlibrary`.
 
 ### Changed
+- Assertion source capture walks the call frames; `inspect.stack()` is no longer called. Source file, line and function are recorded as before; source lines (`code_context`) and the traceback are built only for a failed assertion, so a passing assertion no longer carries `code_context`. In a 5000-assertion loop on Python 3.11 a passing assertion went from 134.7 to 1.7 microseconds and a failing one from 146.4 to 32.1.
 - `bud_` methods run in the order they are declared in the test class instead of alphabetical order, so numeric prefixes are no longer needed to order steps. A subclass's own methods run before inherited ones; an override runs in the subclass's position. A suite whose methods are declared in a different order than their alphabetical one now runs in the declared order. Methods are found on the class and its bases; a `bud_` attribute set on an instance is no longer run.
 
 ## [1.1.0] — 2026-09-09

@@ -253,8 +253,8 @@ Subclass attributes control serialised result size and detail:
 
 | Attribute | Default | Purpose |
 |---|---:|---|
-| `CAPTURE_SOURCE_PATH` | `True` | Capture failure source file and line |
-| `CAPTURE_TRACEBACK` | `True` | Capture traceback text |
+| `CAPTURE_SOURCE_PATH` | `True` | Capture source file, line and function of each assertion, and the source lines of a failed one |
+| `CAPTURE_TRACEBACK` | `True` | Capture traceback text of a failed assertion |
 | `MAX_RESULT_VALUE_LENGTH` | `5000` | Truncate long expected/actual/result values |
 
 ```python
