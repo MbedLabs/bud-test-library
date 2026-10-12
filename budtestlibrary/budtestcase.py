@@ -163,6 +163,44 @@ class AssertionError(Exception):
     pass
 
 
+class _AssertRaisesContext:
+    """Context manager that records whether its block raised the expected exception."""
+
+    def __init__(
+        self,
+        test_case: "BudTestCase",
+        expected_exception: type,
+        msg: str,
+        abort_on_fail: bool,
+    ) -> None:
+        self._test_case = test_case
+        self._expected_exception = expected_exception
+        self._msg = msg
+        self._abort_on_fail = abort_on_fail
+
+    def __enter__(self) -> "_AssertRaisesContext":
+        return self
+
+    def __exit__(self, exc_type: Optional[type], exc_value: Any, exc_tb: Any) -> bool:
+        if exc_type is None:
+            raised = False
+            actual = "no exception raised"
+        else:
+            raised = issubclass(exc_type, self._expected_exception)
+            if not raised and not issubclass(exc_type, Exception):
+                return False
+            actual = f"{exc_type.__name__}: {exc_value}"
+        self._test_case.assertTrue(
+            raised,
+            msg=self._msg,
+            expected=self._expected_exception.__name__,
+            actual=actual,
+            abort_on_fail=self._abort_on_fail,
+            assertion_type="AssertRaises",
+        )
+        return exc_type is not None
+
+
 _PARAMETERS_ATTRIBUTE = "_bud_parameters"
 
 MAX_STEP_NAME_LENGTH = 255
@@ -557,6 +595,17 @@ class BudTestCase(ABC):  # noqa: B024
             )
 
         return condition
+
+    def assertRaises(
+        self, expected_exception: type, msg: str = "", abort_on_fail: bool = False
+    ) -> _AssertRaisesContext:
+        """Return a context manager recording an AssertRaises entry for its block.
+
+        The entry passes when the block raises expected_exception. When the block
+        raises nothing or another exception, the entry fails and the exception is
+        suppressed; with abort_on_fail=True the failure raises AssertionError.
+        """
+        return _AssertRaisesContext(self, expected_exception, msg, abort_on_fail)
 
     def _get_assertion_callsite(self, failed: bool = False) -> dict[str, Any]:
         """Return source file, line and function of the first caller outside the library.

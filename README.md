@@ -233,6 +233,7 @@ Available helpers include:
 - `assertRegex`
 - `assertInTolerance`
 - `assertInRange`
+- `assertRaises` (context manager)
 - `skipAssert`
 
 Example:
@@ -245,6 +246,15 @@ self.assertInRange(
     include_bounds=True,
     msg="Temperature is inside the accepted range",
 )
+```
+
+`assertRaises` checks that a block raises an exception. If the block raises
+nothing or a different exception, the entry fails and the exception is
+suppressed, so the step continues; `abort_on_fail=True` stops the step instead:
+
+```python
+with self.assertRaises(ValueError, msg="Negative voltage rejected"):
+    set_voltage(-1)
 ```
 
 ## Result capture
