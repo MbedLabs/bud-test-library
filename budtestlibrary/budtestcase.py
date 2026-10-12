@@ -11,6 +11,7 @@ import asyncio
 import functools
 import inspect
 import logging
+import os
 import re
 import sys
 import time
@@ -21,7 +22,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from types import FrameType
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 from budtestlibrary.config import BudConfig
 
@@ -285,6 +286,7 @@ class BudTestCase(ABC):  # noqa: B024
         self._results: list[TestMethodResult] = []
         self._current_assertions: list[TestResult] = []
         self._uploaded_files: list[str] = []
+        self._current_artifacts: list[dict[str, str]] = []
         self._start_time: Optional[datetime] = None
         self._end_time: Optional[datetime] = None
         self._console_handler: Optional[logging.Handler] = None
@@ -442,6 +444,7 @@ class BudTestCase(ABC):  # noqa: B024
         self.log_info(f"{BLUE}{'─' * 60}{RESET}")
 
         self._current_assertions = []
+        self._current_artifacts = []
         start_time = time.time()
         error_msg = None
         tb = None
@@ -516,6 +519,9 @@ class BudTestCase(ABC):  # noqa: B024
 
         if self.bloom_metadata and hasattr(self.bloom_metadata, "get_full_tc_id"):
             result.metadata["tc_id"] = self.bloom_metadata.get_full_tc_id()
+
+        if self._current_artifacts:
+            result.metadata["artifacts"] = list(self._current_artifacts)
 
         return result
 
@@ -865,6 +871,25 @@ class BudTestCase(ABC):  # noqa: B024
             assertion_type="AssertRequire",
             **kwargs,
         )
+
+    def attach_artifact(self, path: Union[str, Path], name: Optional[str] = None) -> None:
+        """Record an existing file as an artifact of the current step.
+
+        The absolute path and the name, the file name by default, are added to
+        the step result's metadata["artifacts"]. A path that is not an existing
+        file records a failed AttachArtifact entry and raises AssertionError.
+        """
+        file_path = Path(os.path.abspath(path))
+        if not file_path.is_file():
+            self.assertTrue(
+                False,
+                msg=f"Artifact file not found: {path}",
+                expected="existing file",
+                actual=str(file_path),
+                abort_on_fail=True,
+                assertion_type="AttachArtifact",
+            )
+        self._current_artifacts.append({"path": str(file_path), "name": name or file_path.name})
 
     def waitUntil(
         self,

@@ -294,6 +294,24 @@ class CompactResultsTest(BudTestCase):
     MAX_RESULT_VALUE_LENGTH = 500
 ```
 
+## Artifacts
+
+`attach_artifact(path, name=None)` records a file the step produced, such as a
+log, a capture or an export, on that step's result. The absolute path and the
+name (the file name by default) are added to the result's
+`metadata["artifacts"]`. Call it during a step, its `setUp()` or its
+`tearDown()`; a call from `setUpClass()` or `tearDownClass()` belongs to no
+step and is not recorded (a missing file there fails the run, like any other
+`setUpClass()` error). Inside a step, a path that is not an existing file
+records a failed `AttachArtifact` entry and stops the step; inside `setUp()` it
+is a setup failure, and inside `tearDown()` it is logged:
+
+```python
+def bud_capture_traffic(self):
+    capture = run_capture("eth0", seconds=10)
+    self.attach_artifact(capture, name="traffic capture")
+```
+
 ## Firmware flashing
 
 Implement `FlashEvent` for product-specific flashing:
