@@ -856,6 +856,16 @@ class BudTestCase(ABC):  # noqa: B024
             **kwargs,
         )
 
+    def require(self, condition: bool, msg: str = "", **kwargs) -> bool:
+        """Record an AssertRequire entry and stop the step when condition is false."""
+        return self.assertTrue(
+            condition,
+            msg=msg,
+            abort_on_fail=True,
+            assertion_type="AssertRequire",
+            **kwargs,
+        )
+
     def _truncate_value(self, value: str) -> str:
         """Truncate a value string to MAX_RESULT_VALUE_LENGTH."""
         if len(value) > self.MAX_RESULT_VALUE_LENGTH:

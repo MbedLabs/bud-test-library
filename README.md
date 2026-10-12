@@ -234,6 +234,7 @@ Available helpers include:
 - `assertInTolerance`
 - `assertInRange`
 - `assertRaises` (context manager)
+- `require` (precondition that stops the step when false)
 - `skipAssert`
 
 Example:
@@ -246,6 +247,14 @@ self.assertInRange(
     include_bounds=True,
     msg="Temperature is inside the accepted range",
 )
+```
+
+`require` checks a precondition: it records an `AssertRequire` entry and, when
+the condition is false, stops the step at once instead of letting later lines
+fail on the missing prerequisite:
+
+```python
+self.require(connection is not None, msg="Connection is open")
 ```
 
 `assertRaises` checks that a block raises an exception. If the block raises

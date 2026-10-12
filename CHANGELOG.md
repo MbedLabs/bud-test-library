@@ -5,6 +5,7 @@ All notable changes to `budtestlibrary` will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `require(condition, msg="", **kwargs)` records an `AssertRequire` entry and, when the condition is false, raises `AssertionError` so the step stops at once.
 - `assertRaises(expected_exception, msg="", abort_on_fail=False)` context manager records an `AssertRaises` entry: passed when the block raises the expected exception (or a subclass), failed when it raises nothing or a different exception, which is then suppressed. With `abort_on_fail=True` a failure raises `AssertionError`. An unexpected exception that is not an `Exception` subclass (such as `KeyboardInterrupt`, `SystemExit` or `asyncio.CancelledError`) passes through unrecorded.
 - `async def bud_` steps, parameterized ones included, run to completion with `asyncio.run()`; their assertions and unhandled exceptions are recorded like those of any step. A step called from inside an already running event loop fails with the `RuntimeError` from `asyncio.run()`.
 - `setUp()` and `tearDown()` on `BudTestCase` run before and after each `bud_` step; `tearDown()` runs even when the step fails. Assertions called inside them are logged but not recorded on the step. A `setUp()` error skips the step and fails it with `setUp failed: <error>`; a `tearDown()` error is logged and leaves the step result unchanged. Their log lines appear at DEBUG level. A step's `duration_seconds` covers `setUp()`, the method and `tearDown()`.
