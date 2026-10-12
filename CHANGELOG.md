@@ -5,6 +5,7 @@ All notable changes to `budtestlibrary` will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `async def bud_` steps, parameterized ones included, run to completion with `asyncio.run()`; their assertions and unhandled exceptions are recorded like those of any step. A step called from inside an already running event loop fails with the `RuntimeError` from `asyncio.run()`.
 - `setUp()` and `tearDown()` on `BudTestCase` run before and after each `bud_` step; `tearDown()` runs even when the step fails. Assertions called inside them are logged but not recorded on the step. A `setUp()` error skips the step and fails it with `setUp failed: <error>`; a `tearDown()` error is logged and leaves the step result unchanged. Their log lines appear at DEBUG level. A step's `duration_seconds` covers `setUp()`, the method and `tearDown()`.
 - `@parameterized(data)` runs a `bud_` method once per data item as separate steps named `<method>[<id>]`, each with its own result; a single value is passed as one argument, a tuple as positional arguments, a dict as keyword arguments. A failing item does not stop the others. Step names must be unique and at most 255 characters; a repeated or longer name fails the run after `setUpClass()` and before any step executes. Exported from `budtestlibrary`.
 

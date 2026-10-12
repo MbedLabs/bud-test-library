@@ -7,6 +7,7 @@ Provides:
 - High-visibility multi-color console output with bold white timestamps and timezones
 """
 
+import asyncio
 import functools
 import inspect
 import logging
@@ -189,6 +190,13 @@ def _parameter_id(item: Any) -> str:
     if isinstance(item, dict):
         return ", ".join(f"{key}={value}" for key, value in item.items())
     return str(item)
+
+
+def _is_coroutine_step(method: Callable) -> bool:
+    """Return True when a step, or the method a parameterized step wraps, is async."""
+    if isinstance(method, functools.partial):
+        method = method.func
+    return inspect.iscoroutinefunction(method)
 
 
 def _bind_parameters(method: Callable, item: Any) -> Callable:
@@ -404,7 +412,14 @@ class BudTestCase(ABC):  # noqa: B024
 
             if not setup_failed:
                 try:
-                    method()
+                    if _is_coroutine_step(method):
+                        coroutine = method()
+                        try:
+                            asyncio.run(coroutine)
+                        finally:
+                            coroutine.close()
+                    else:
+                        method()
                 except AssertionError as e:
                     passed = False
                     error_msg = str(e)

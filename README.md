@@ -152,6 +152,16 @@ A subclass's own `bud_` methods run first, then the ones it inherits, base class
 by base class. A method that overrides an inherited one runs in the subclass's
 position.
 
+Steps may be `async def`; each one is run to completion with `asyncio.run()`,
+and its assertions and exceptions are recorded as for any step:
+
+```python
+class ApiTest(BudTestCase):
+    async def bud_health(self):
+        status = await fetch_status()
+        self.assertEqual(status, 200)
+```
+
 ### Per-step setup and cleanup
 
 `setUp()` runs before each `bud_` step and `tearDown()` after it, even when the
