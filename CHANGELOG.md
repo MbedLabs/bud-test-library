@@ -4,6 +4,9 @@ All notable changes to `budtestlibrary` will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- `@parameterized(data)` runs a `bud_` method once per data item as separate steps named `<method>[<id>]`, each with its own result; a single value is passed as one argument, a tuple as positional arguments, a dict as keyword arguments. A failing item does not stop the others. Step names must be unique and at most 255 characters; a repeated or longer name fails the run after `setUpClass()` and before any step executes. Exported from `budtestlibrary`.
+
 ### Changed
 - `bud_` methods run in the order they are declared in the test class instead of alphabetical order, so numeric prefixes are no longer needed to order steps. A subclass's own methods run before inherited ones; an override runs in the subclass's position. A suite whose methods are declared in a different order than their alphabetical one now runs in the declared order. Methods are found on the class and its bases; a `bud_` attribute set on an instance is no longer run.
 

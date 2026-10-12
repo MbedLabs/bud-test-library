@@ -122,6 +122,7 @@ because this library holds no Bloom address and no credential.
 | Export | Purpose |
 |---|---|
 | `BudTestCase` | Base class for lifecycle, assertions, logging, and results |
+| `parameterized` | Decorator that runs a `bud_` method once per data item |
 | `BloomMetaData` | Optional Bloom PLM test-case traceability metadata |
 | `FlashEvent` | Abstract firmware-flashing operation |
 | `FlashSuccess` | Successful flashing result |
@@ -150,6 +151,33 @@ class OrderedTest(BudTestCase):
 A subclass's own `bud_` methods run first, then the ones it inherits, base class
 by base class. A method that overrides an inherited one runs in the subclass's
 position.
+
+### Parameterized steps
+
+`@parameterized(data)` runs a `bud_` method once per item of `data`, each run a
+separate step with its own result. A single value is passed as one argument, a
+tuple is unpacked as positional arguments and a dict as keyword arguments:
+
+```python
+from budtestlibrary import BudTestCase, parameterized
+
+
+class RailTest(BudTestCase):
+    @parameterized(["1.8V", "3.3V"])
+    def bud_test_voltage(self, rail):
+        ...
+
+    @parameterized([{"rail": "3.3V", "limit": 0.1}])
+    def bud_test_ripple(self, rail, limit):
+        ...
+```
+
+The steps are named `bud_test_voltage[1.8V]`, `bud_test_voltage[3.3V]` and
+`bud_test_ripple[rail=3.3V, limit=0.1]` (tuple values are joined by `, `). They
+run in the decorated method's position, in data order, and a failing item does
+not stop the others. Step names must be unique and at most 255 characters (the
+length Bud stores); a repeated or longer name fails the run after `setUpClass()`
+and before any step executes.
 
 After execution, call `get_results()`:
 

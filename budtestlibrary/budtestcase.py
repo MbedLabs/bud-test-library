@@ -7,12 +7,14 @@ Provides:
 - High-visibility multi-color console output with bold white timestamps and timezones
 """
 
+import functools
 import inspect
 import logging
 import re
 import time
 import traceback
 from abc import ABC
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -158,6 +160,46 @@ class AssertionError(Exception):
     pass
 
 
+_PARAMETERS_ATTRIBUTE = "_bud_parameters"
+
+MAX_STEP_NAME_LENGTH = 255
+
+
+def parameterized(data: Iterable[Any]) -> Callable[[Callable], Callable]:
+    """Mark a bud_* method to run once per item of data, each run its own step.
+
+    A single value is passed as one argument, a tuple is unpacked as positional
+    arguments and a dict as keyword arguments. Each step is named
+    ``<method>[<id>]``: the value itself, the tuple's values joined by ", ", or
+    the dict's key=value pairs joined by ", ".
+    """
+    items = list(data)
+
+    def decorator(func: Callable) -> Callable:
+        setattr(func, _PARAMETERS_ATTRIBUTE, items)
+        return func
+
+    return decorator
+
+
+def _parameter_id(item: Any) -> str:
+    """Return the bracketed step name part for one parameter item."""
+    if isinstance(item, tuple):
+        return ", ".join(str(value) for value in item)
+    if isinstance(item, dict):
+        return ", ".join(f"{key}={value}" for key, value in item.items())
+    return str(item)
+
+
+def _bind_parameters(method: Callable, item: Any) -> Callable:
+    """Return method with one parameter item bound as its arguments."""
+    if isinstance(item, tuple):
+        return functools.partial(method, *item)
+    if isinstance(item, dict):
+        return functools.partial(method, **item)
+    return functools.partial(method, item)
+
+
 class BudTestCase(ABC):  # noqa: B024
     """
     Base class for all test cases in the bud test framework.
@@ -285,6 +327,8 @@ class BudTestCase(ABC):  # noqa: B024
 
         The class's own methods come first, then those inherited from each base
         class in method resolution order; an override keeps the subclass position.
+        Raises ValueError when a parameterized step name repeats or is longer than
+        MAX_STEP_NAME_LENGTH.
         """
         methods = []
         seen: set[str] = set()
@@ -294,8 +338,24 @@ class BudTestCase(ABC):  # noqa: B024
                     continue
                 seen.add(name)
                 method = getattr(self, name)
-                if callable(method):
+                if not callable(method):
+                    continue
+                parameters = getattr(method, _PARAMETERS_ATTRIBUTE, None)
+                if parameters is None:
                     methods.append((name, method))
+                    continue
+                step_names: set[str] = set()
+                for item in parameters:
+                    step_name = f"{name}[{_parameter_id(item)}]"
+                    if step_name in step_names:
+                        raise ValueError(f"{name}: step name {step_name} repeats")
+                    if len(step_name) > MAX_STEP_NAME_LENGTH:
+                        raise ValueError(
+                            f"{name}: step name is {len(step_name)} characters, "
+                            f"over the {MAX_STEP_NAME_LENGTH}-character limit"
+                        )
+                    step_names.add(step_name)
+                    methods.append((step_name, _bind_parameters(method, item)))
         return methods
 
     def _format_assertion_line(
