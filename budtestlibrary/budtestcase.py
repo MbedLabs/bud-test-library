@@ -239,6 +239,14 @@ class BudTestCase(ABC):  # noqa: B024
         """Override in subclass for one-time cleanup."""
         pass
 
+    def setUp(self) -> None:  # noqa: B027
+        """Override in subclass for setup run before each bud_* step."""
+        pass
+
+    def tearDown(self) -> None:  # noqa: B027
+        """Override in subclass for cleanup run after each bud_* step."""
+        pass
+
     def run(self) -> bool:
         """Execute the entire test case (file)."""
         # Configure logging with Level info for the header
@@ -380,18 +388,43 @@ class BudTestCase(ABC):  # noqa: B024
         passed = True
 
         try:
-            method()
-        except AssertionError as e:
-            passed = False
-            error_msg = str(e)
-            tb = traceback.format_exc() if self.CAPTURE_TRACEBACK else None
-        except Exception as e:
-            passed = False
-            error_msg = str(e)
-            full_tb = traceback.format_exc()
-            tb = full_tb if self.CAPTURE_TRACEBACK else None
-            self._logger.error(f"{RED}UNHANDLED EXCEPTION DURING STEP EXECUTION: {e}{RESET}")
-            self._logger.error(full_tb)
+            setup_failed = False
+            try:
+                self._logger.debug(f"{MAGENTA}Entering setUp for {method_name}{RESET}")
+                self._call_hook(self.setUp)
+                self._logger.debug(f"{MAGENTA}setUp completed for {method_name}{RESET}")
+            except Exception as e:
+                setup_failed = True
+                passed = False
+                error_msg = f"setUp failed: {e}"
+                full_tb = traceback.format_exc()
+                tb = full_tb if self.CAPTURE_TRACEBACK else None
+                self._logger.error(f"{RED}SETUP FAILURE BEFORE STEP {method_name}: {e}{RESET}")
+                self._logger.error(full_tb)
+
+            if not setup_failed:
+                try:
+                    method()
+                except AssertionError as e:
+                    passed = False
+                    error_msg = str(e)
+                    tb = traceback.format_exc() if self.CAPTURE_TRACEBACK else None
+                except Exception as e:
+                    passed = False
+                    error_msg = str(e)
+                    full_tb = traceback.format_exc()
+                    tb = full_tb if self.CAPTURE_TRACEBACK else None
+                    self._logger.error(
+                        f"{RED}UNHANDLED EXCEPTION DURING STEP EXECUTION: {e}{RESET}"
+                    )
+                    self._logger.error(full_tb)
+        finally:
+            try:
+                self._logger.debug(f"{MAGENTA}Entering tearDown for {method_name}{RESET}")
+                self._call_hook(self.tearDown)
+                self._logger.debug(f"{MAGENTA}tearDown completed for {method_name}{RESET}")
+            except Exception as e:
+                self._logger.error(f"{RED}CLEANUP FAILURE DURING tearDown: {e}{RESET}")
 
         duration = time.time() - start_time
 
@@ -418,6 +451,15 @@ class BudTestCase(ABC):  # noqa: B024
             result.metadata["tc_id"] = self.bloom_metadata.get_full_tc_id()
 
         return result
+
+    def _call_hook(self, hook: Callable[[], None]) -> None:
+        """Call a per-step hook with assertion entries kept out of the step."""
+        step_assertions = self._current_assertions
+        self._current_assertions = []
+        try:
+            hook()
+        finally:
+            self._current_assertions = step_assertions
 
     def _format_assertion_line_for_storage(self, a: TestResult) -> str:
         """Returns a non-ANSI formatted string for database/internal storage."""

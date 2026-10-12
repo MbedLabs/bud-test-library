@@ -22,7 +22,7 @@ python -m pip install budtestlibrary
 
 ## Features
 
-- `BudTestCase` lifecycle with `setUpClass()` and `tearDownClass()`.
+- `BudTestCase` lifecycle with `setUpClass()` and `tearDownClass()` once per class, and `setUp()` and `tearDown()` around each step.
 - Automatic discovery of methods whose names start with `bud_`, run in declaration order.
 - Boolean, equality, membership, range, tolerance, and regex assertions.
 - Structured assertion and test-method results.
@@ -151,6 +151,29 @@ class OrderedTest(BudTestCase):
 A subclass's own `bud_` methods run first, then the ones it inherits, base class
 by base class. A method that overrides an inherited one runs in the subclass's
 position.
+
+### Per-step setup and cleanup
+
+`setUp()` runs before each `bud_` step and `tearDown()` after it, even when the
+step fails. Assertions called inside them are logged but not recorded on the
+step; only one that aborts in `setUp()` (`abort_on_fail=True`) fails the step, as
+a setup failure. If `setUp()` raises, the
+step is not run and fails with `setUp failed: <error>`; `tearDown()` still runs.
+An error in `tearDown()` is logged and does not change the step result. Their
+enter and exit lines are logged at DEBUG level, shown after
+`set_loglevel(logging.DEBUG)`.
+
+```python
+class DeviceTest(BudTestCase):
+    def setUp(self):
+        self.device = open_device()
+
+    def tearDown(self):
+        self.device.close()
+
+    def bud_reads_temperature(self):
+        self.assertInRange(self.device.temperature(), 18.0, 26.0)
+```
 
 ### Parameterized steps
 
