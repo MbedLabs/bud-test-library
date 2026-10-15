@@ -176,3 +176,15 @@ class TestStepNames:
 
         tc = _run(EdgeTest)
         assert len(tc.get_results()[0].method_name) == MAX_STEP_NAME_LENGTH
+
+
+def test_plain_step_name_over_the_storage_limit_fails_before_execution():
+    """A dynamically declared plain step obeys the same persisted-name limit."""
+    executed = []
+    name = "bud_" + "x" * 252
+    suite = type("LongPlainStep", (BudTestCase,), {name: lambda self: executed.append(True)})
+    case = suite()
+    case.set_loglevel(logging.CRITICAL)
+    assert case.run() is False
+    assert executed == []
+    assert case.get_results() == []

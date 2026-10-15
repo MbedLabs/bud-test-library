@@ -162,6 +162,8 @@ class ApiTest(BudTestCase):
         self.assertEqual(status, 200)
 ```
 
+All step names, plain or parameterized, must fit within 255 characters. A longer name fails the run during discovery after `setUpClass()` and before any step executes.
+
 ### Per-step setup and cleanup
 
 `setUp()` runs before each `bud_` step and `tearDown()` after it, even when the

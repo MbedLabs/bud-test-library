@@ -397,7 +397,7 @@ class BudTestCase(ABC):  # noqa: B024
 
         The class's own methods come first, then those inherited from each base
         class in method resolution order; an override keeps the subclass position.
-        Raises ValueError when a parameterized step name repeats or is longer than
+        Raises ValueError when a parameterized step name repeats or any step is longer than
         MAX_STEP_NAME_LENGTH.
         """
         methods = []
@@ -412,6 +412,11 @@ class BudTestCase(ABC):  # noqa: B024
                     continue
                 parameters = getattr(method, _PARAMETERS_ATTRIBUTE, None)
                 if parameters is None:
+                    if len(name) > MAX_STEP_NAME_LENGTH:
+                        raise ValueError(
+                            f"{name}: step name is {len(name)} characters, "
+                            f"over the {MAX_STEP_NAME_LENGTH}-character limit"
+                        )
                     methods.append((name, method))
                     continue
                 step_names: set[str] = set()
