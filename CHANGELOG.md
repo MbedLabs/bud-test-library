@@ -4,6 +4,8 @@ All notable changes to `budtestlibrary` will be documented in this file.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-15
+
 ### Added
 - `attach_artifact(path, name=None)` records an existing file on the current step's result as `metadata["artifacts"]`, a list of `{"path": <absolute path>, "name": <name or file name>}`, present only on steps that attached a file. Inside a step, a path that is not an existing file records a failed `AttachArtifact` entry and stops the step; inside `setUp()` it is a setup failure and inside `tearDown()` it is logged, as for other errors in those hooks. A call from `setUpClass()` or `tearDownClass()` is not recorded; a missing file in `setUpClass()` fails the run like any other `setUpClass()` error.
 - `waitUntil(condition_fn, timeout=10.0, poll_interval=0.5, msg="", abort_on_fail=False)` polls a condition until it is true or the timeout passes, returns whether it was met and records an `AssertWaitUntil` entry with `elapsed_seconds`, `timeout_seconds` and `poll_interval_seconds` in its metadata. An exception from the condition counts as not yet true; on timeout the last one is recorded as `last_exception`.
