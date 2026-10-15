@@ -272,7 +272,7 @@ as not yet true; on timeout the last one is recorded as `last_exception`:
 self.waitUntil(lambda: board.is_booted(), timeout=30.0, poll_interval=0.5, msg="Board boots")
 ```
 
-`assertRaises` checks that a block raises an exception. If the block raises
+`assertRaises` accepts one exception class and checks that a block raises that exception or a subclass. If the block raises
 nothing or a different exception, the entry fails and the exception is
 suppressed, so the step continues; `abort_on_fail=True` stops the step instead:
 
