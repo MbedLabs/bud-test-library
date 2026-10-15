@@ -166,6 +166,8 @@ All step names, plain or parameterized, must fit within 255 characters. A longer
 
 ### Per-step setup and cleanup
 
+Existing subclasses that already define `setUp()` or `tearDown()` now have those hooks invoked around every step. Check their per-step behavior before upgrading.
+
 `setUp()` runs before each `bud_` step and `tearDown()` after it, even when the
 step fails. Assertions called inside them are logged but not recorded on the
 step; only one that aborts in `setUp()` (`abort_on_fail=True`) fails the step, as
