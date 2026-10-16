@@ -22,8 +22,8 @@ python -m pip install budtestlibrary
 
 ## Features
 
-- `BudTestCase` lifecycle with `setUpClass()` and `tearDownClass()`.
-- Automatic discovery of methods whose names start with `bud_`.
+- `BudTestCase` lifecycle with `setUpClass()` and `tearDownClass()` once per class, and `setUp()` and `tearDown()` around each step.
+- Automatic discovery of methods whose names start with `bud_`, run in declaration order.
 - Boolean, equality, membership, range, tolerance, and regex assertions.
 - Structured assertion and test-method results.
 - Configurable source-location, traceback, and value capture.
@@ -122,6 +122,7 @@ because this library holds no Bloom address and no credential.
 | Export | Purpose |
 |---|---|
 | `BudTestCase` | Base class for lifecycle, assertions, logging, and results |
+| `parameterized` | Decorator that runs a `bud_` method once per data item |
 | `BloomMetaData` | Optional Bloom PLM test-case traceability metadata |
 | `FlashEvent` | Abstract firmware-flashing operation |
 | `FlashSuccess` | Successful flashing result |
@@ -133,16 +134,87 @@ because this library holds no Bloom address and no credential.
 ## Test structure
 
 `BudTestCase.run()` discovers methods prefixed with `bud_` and executes them in
-alphabetical order. Prefix methods numerically when explicit ordering matters:
+the order they are declared in the class. No numeric prefixes are needed:
 
 ```python
 class OrderedTest(BudTestCase):
-    def bud_01_connect(self):
+    def bud_connect(self):
         ...
 
-    def bud_02_measure(self):
+    def bud_measure(self):
+        ...
+
+    def bud_disconnect(self):
         ...
 ```
+
+A subclass's own `bud_` methods run first, then the ones it inherits, base class
+by base class. A method that overrides an inherited one runs in the subclass's
+position.
+
+Steps may be `async def`; each one is run to completion with `asyncio.run()`,
+and its assertions and exceptions are recorded as for any step:
+
+```python
+class ApiTest(BudTestCase):
+    async def bud_health(self):
+        status = await fetch_status()
+        self.assertEqual(status, 200)
+```
+
+All step names, plain or parameterized, must fit within 255 characters. A longer name fails the run during discovery after `setUpClass()` and before any step executes.
+
+### Per-step setup and cleanup
+
+Existing subclasses that already define `setUp()` or `tearDown()` now have those hooks invoked around every step. Check their per-step behavior before upgrading.
+
+`setUp()` runs before each `bud_` step and `tearDown()` after it, even when the
+step fails. Assertions called inside them are logged but not recorded on the
+step; only one that aborts in `setUp()` (`abort_on_fail=True`) fails the step, as
+a setup failure. If `setUp()` raises, the
+step is not run and fails with `setUp failed: <error>`; `tearDown()` still runs.
+An error in `tearDown()` is logged and does not change the step result. Their
+enter and exit lines are logged at DEBUG level, shown after
+`set_loglevel(logging.DEBUG)`.
+
+```python
+class DeviceTest(BudTestCase):
+    def setUp(self):
+        self.device = open_device()
+
+    def tearDown(self):
+        self.device.close()
+
+    def bud_reads_temperature(self):
+        self.assertInRange(self.device.temperature(), 18.0, 26.0)
+```
+
+### Parameterized steps
+
+`@parameterized(data)` runs a `bud_` method once per item of `data`, each run a
+separate step with its own result. A single value is passed as one argument, a
+tuple is unpacked as positional arguments and a dict as keyword arguments:
+
+```python
+from budtestlibrary import BudTestCase, parameterized
+
+
+class RailTest(BudTestCase):
+    @parameterized(["1.8V", "3.3V"])
+    def bud_test_voltage(self, rail):
+        ...
+
+    @parameterized([{"rail": "3.3V", "limit": 0.1}])
+    def bud_test_ripple(self, rail, limit):
+        ...
+```
+
+The steps are named `bud_test_voltage[1.8V]`, `bud_test_voltage[3.3V]` and
+`bud_test_ripple[rail=3.3V, limit=0.1]` (tuple values are joined by `, `). They
+run in the decorated method's position, in data order, and a failing item does
+not stop the others. Step names must be unique and at most 255 characters (the
+length Bud stores); a repeated or longer name fails the run after `setUpClass()`
+and before any step executes.
 
 After execution, call `get_results()`:
 
@@ -165,6 +237,9 @@ Available helpers include:
 - `assertRegex`
 - `assertInTolerance`
 - `assertInRange`
+- `assertRaises` (context manager)
+- `require` (precondition that stops the step when false)
+- `waitUntil` (polls a condition until it is true or a timeout passes)
 - `skipAssert`
 
 Example:
@@ -179,14 +254,41 @@ self.assertInRange(
 )
 ```
 
+`require` checks a precondition: it records an `AssertRequire` entry and, when
+the condition is false, stops the step at once instead of letting later lines
+fail on the missing prerequisite:
+
+```python
+self.require(connection is not None, msg="Connection is open")
+```
+
+`waitUntil` polls a condition every `poll_interval` seconds until it returns
+true or `timeout` seconds pass, and records an `AssertWaitUntil` entry with
+`elapsed_seconds`, `timeout_seconds` and `poll_interval_seconds` in its metadata.
+It returns whether the condition was met. An exception from the condition counts
+as not yet true; on timeout the last one is recorded as `last_exception`:
+
+```python
+self.waitUntil(lambda: board.is_booted(), timeout=30.0, poll_interval=0.5, msg="Board boots")
+```
+
+`assertRaises` accepts one exception class and checks that a block raises that exception or a subclass. If the block raises
+nothing or a different exception, the entry fails and the exception is
+suppressed, so the step continues; `abort_on_fail=True` stops the step instead:
+
+```python
+with self.assertRaises(ValueError, msg="Negative voltage rejected"):
+    set_voltage(-1)
+```
+
 ## Result capture
 
 Subclass attributes control serialised result size and detail:
 
 | Attribute | Default | Purpose |
 |---|---:|---|
-| `CAPTURE_SOURCE_PATH` | `True` | Capture failure source file and line |
-| `CAPTURE_TRACEBACK` | `True` | Capture traceback text |
+| `CAPTURE_SOURCE_PATH` | `True` | Capture source file, line and function of each assertion, and the source lines of a failed one |
+| `CAPTURE_TRACEBACK` | `True` | Capture traceback text of a failed assertion |
 | `MAX_RESULT_VALUE_LENGTH` | `5000` | Truncate long expected/actual/result values |
 
 ```python
@@ -194,6 +296,24 @@ class CompactResultsTest(BudTestCase):
     CAPTURE_SOURCE_PATH = False
     CAPTURE_TRACEBACK = False
     MAX_RESULT_VALUE_LENGTH = 500
+```
+
+## Artifacts
+
+`attach_artifact(path, name=None)` records a file the step produced, such as a
+log, a capture or an export, on that step's result. The absolute path and the
+name (the file name by default) are added to the result's
+`metadata["artifacts"]`. Call it during a step, its `setUp()` or its
+`tearDown()`; a call from `setUpClass()` or `tearDownClass()` belongs to no
+step and is not recorded (a missing file there fails the run, like any other
+`setUpClass()` error). Inside a step, a path that is not an existing file
+records a failed `AttachArtifact` entry and stops the step; inside `setUp()` it
+is a setup failure, and inside `tearDown()` it is logged:
+
+```python
+def bud_capture_traffic(self):
+    capture = run_capture("eth0", seconds=10)
+    self.attach_artifact(capture, name="traffic capture")
 ```
 
 ## Firmware flashing
@@ -273,6 +393,8 @@ python -c "import budtestlibrary.examples, pathlib; print(pathlib.Path(budtestli
 
 | `budtestlibrary` | Intended `bud_runner` pairing | Notes |
 |---|---|---|
+| `1.2.0` | `1.2.0` | Per-step `setUp()`/`tearDown()`, `attach_artifact`, `@parameterized`, `waitUntil`, `require`, `assertRaises`, `async def` steps, declaration-order steps |
+| `1.1.0` | `1.1.0` | Updated compatibility matrix |
 | `1.0.3` | `1.0.3` | Optional `addr` target address on `FlashEvent.flash()` and `FlashEvent.execute()` |
 | `1.0.2` | `1.0.2` | Permanent AGPL wording clarified; examples and README coverage expanded |
 | `1.0.1` | `1.0.1` | Examples bundled in the wheel |
@@ -299,23 +421,10 @@ pytest tests/ -v
 
 ## Licence
 
-`budtestlibrary` is permanent free and open-source software licensed under the
+`budtestlibrary` is open-source software licensed under the
 **GNU Affero General Public License v3.0 only (`AGPL-3.0-only`)**.
 
-No paid EmbedLabs licence is required to use `budtestlibrary`, including for
-commercial use, provided the AGPL terms are followed. Accepted community
-contributions remain publicly available under `AGPL-3.0-only` and will not
-become proprietary-only.
-
-Bud and Bloom are separate source-available applications. Commercial licensing,
-deployment, integration, and support offered through `sales@embedlabs.de`
-applies to those applications and services—not to the `budtestlibrary` package
-licence.
-
-Technical, security, and contribution questions: `dev@embedlabs.net`.
-
-Copyright (C) 2026 Mohamed Amine El Omari Alaoui, operating under the name
-EmbedLabs.
+Copyright © 2026 EmbedLabs, operated by Mohamed Amine El Omari Alaoui.
 
 - [Full licence](https://github.com/MbedLabs/bud-test-library/blob/main/LICENSE)
 - [Contributing](https://github.com/MbedLabs/bud-test-library/blob/main/CONTRIBUTING.md)

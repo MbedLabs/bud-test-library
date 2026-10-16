@@ -126,7 +126,8 @@ class FlashFailure(FlashResult):
             raise ValueError("FlashFailure.message must be a non-empty string")
 
     def __post_init__(self):
-        pass
+        """Complete initialization without changing the supplied failure fields."""
+        return None
 
     def is_success(self) -> bool:
         return False

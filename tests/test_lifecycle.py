@@ -93,7 +93,7 @@ class TestDiscovery:
         names = [name for name, _ in methods]
         assert names == ["bud_alpha", "bud_beta", "bud_gamma"]
 
-    def test_discovery_sorts_alphabetically(self):
+    def test_discovery_keeps_declaration_order(self):
         from budtestlibrary import BudTestCase
 
         class SortTest(BudTestCase):
@@ -109,7 +109,7 @@ class TestDiscovery:
         tc = SortTest()
         methods = tc._discover_test_methods()
         names = [name for name, _ in methods]
-        assert names == ["bud_alpha", "bud_middle", "bud_zebra"]
+        assert names == ["bud_zebra", "bud_alpha", "bud_middle"]
 
     def test_excludes_non_callable_attributes(self):
         from budtestlibrary import BudTestCase
@@ -139,7 +139,7 @@ class TestDiscovery:
         tc = OrderedTest()
         tc.set_loglevel(logging.CRITICAL)
         tc.run()
-        assert order == ["first", "second", "third"]
+        assert order == ["second", "first", "third"]
 
 
 class TestGetResults:
