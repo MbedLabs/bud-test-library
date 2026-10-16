@@ -30,6 +30,9 @@ jobs:
         run: ruff check budtestlibrary tests
 
       - name: Run tests
+        env:
+          PACKAGE_ORG: ${{ vars.PACKAGE_ORG }}
+          ORG_MAINTAINER: ${{ secrets.ORG_MAINTAINER }}
         run: pytest
 
   build:
