@@ -7,16 +7,22 @@ Provides:
 - High-visibility multi-color console output with bold white timestamps and timezones
 """
 
+import asyncio
+import functools
 import inspect
 import logging
+import os
 import re
+import sys
 import time
 import traceback
 from abc import ABC
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Optional
+from types import FrameType
+from typing import Any, Callable, Optional, Union
 
 from budtestlibrary.config import BudConfig
 
@@ -158,6 +164,130 @@ class AssertionError(Exception):
     pass
 
 
+class _AssertRaisesContext:
+    """Context manager that records whether its block raised the expected exception."""
+
+    def __init__(
+        self,
+        test_case: "BudTestCase",
+        expected_exception: type,
+        msg: str,
+        abort_on_fail: bool,
+    ) -> None:
+        self._test_case = test_case
+        self._expected_exception = expected_exception
+        self._msg = msg
+        self._abort_on_fail = abort_on_fail
+
+    def __enter__(self) -> "_AssertRaisesContext":
+        return self
+
+    def __exit__(self, exc_type: Optional[type], exc_value: Any, exc_tb: Any) -> bool:
+        if exc_type is None:
+            raised = False
+            actual = "no exception raised"
+        else:
+            raised = issubclass(exc_type, self._expected_exception)
+            if not raised and not issubclass(exc_type, Exception):
+                return False
+            actual = f"{exc_type.__name__}: {exc_value}"
+        self._test_case.assertTrue(
+            raised,
+            msg=self._msg,
+            expected=self._expected_exception.__name__,
+            actual=actual,
+            abort_on_fail=self._abort_on_fail,
+            assertion_type="AssertRaises",
+        )
+        return exc_type is not None
+
+
+_PARAMETERS_ATTRIBUTE = "_bud_parameters"
+
+MAX_STEP_NAME_LENGTH = 255
+
+
+def parameterized(data: Iterable[Any]) -> Callable[[Callable], Callable]:
+    """Mark a bud_* method to run once per item of data, each run its own step.
+
+    A single value is passed as one argument, a tuple is unpacked as positional
+    arguments and a dict as keyword arguments. Each step is named
+    ``<method>[<id>]``: the value itself, the tuple's values joined by ", ", or
+    the dict's key=value pairs joined by ", ".
+    """
+    items = list(data)
+
+    def decorator(func: Callable) -> Callable:
+        setattr(func, _PARAMETERS_ATTRIBUTE, items)
+        return func
+
+    return decorator
+
+
+def _parameter_id(item: Any) -> str:
+    """Return the bracketed step name part for one parameter item."""
+    if isinstance(item, tuple):
+        return ", ".join(str(value) for value in item)
+    if isinstance(item, dict):
+        return ", ".join(f"{key}={value}" for key, value in item.items())
+    return str(item)
+
+
+_LIBRARY_FILE = Path(__file__).resolve()
+
+
+@functools.cache
+def _is_library_file(filename: str) -> bool:
+    """Return True when filename is this module's own source file."""
+    try:
+        return Path(filename).resolve() == _LIBRARY_FILE
+    except OSError:
+        return Path(filename) == _LIBRARY_FILE
+
+
+def _is_coroutine_step(method: Callable) -> bool:
+    """Return True when a step, or the method a parameterized step wraps, is async."""
+    if isinstance(method, functools.partial):
+        method = method.func
+    return inspect.iscoroutinefunction(method)
+
+
+def _bind_parameters(method: Callable, item: Any) -> Callable:
+    """Return method with one parameter item bound as its arguments."""
+    if isinstance(item, tuple):
+        return functools.partial(method, *item)
+    if isinstance(item, dict):
+        return functools.partial(method, **item)
+    return functools.partial(method, item)
+
+
+def _validate_step_name(method_name: str, step_name: str) -> None:
+    """Validate a discovered step's maximum name length."""
+    if len(step_name) > MAX_STEP_NAME_LENGTH:
+        raise ValueError(
+            f"{method_name}: step name is {len(step_name)} characters, "
+            f"over the {MAX_STEP_NAME_LENGTH}-character limit"
+        )
+
+
+def _expand_test_method(name: str, method: Callable) -> list[tuple]:
+    """Return a method's named steps with their parameter items bound."""
+    parameters = getattr(method, _PARAMETERS_ATTRIBUTE, None)
+    if parameters is None:
+        _validate_step_name(name, name)
+        return [(name, method)]
+    methods = []
+    step_names: set[str] = set()
+    for item in parameters:
+        step_name = f"{name}[{_parameter_id(item)}]"
+        if step_name in step_names:
+            raise ValueError(f"{name}: step name {step_name} repeats")
+        _validate_step_name(name, step_name)
+        step_names.add(step_name)
+        methods.append((step_name, _bind_parameters(method, item)))
+    return methods
+
+
 class BudTestCase(ABC):  # noqa: B024
     """
     Base class for all test cases in the bud test framework.
@@ -183,6 +313,7 @@ class BudTestCase(ABC):  # noqa: B024
         self._results: list[TestMethodResult] = []
         self._current_assertions: list[TestResult] = []
         self._uploaded_files: list[str] = []
+        self._current_artifacts: list[dict[str, str]] = []
         self._start_time: Optional[datetime] = None
         self._end_time: Optional[datetime] = None
         self._console_handler: Optional[logging.Handler] = None
@@ -195,6 +326,14 @@ class BudTestCase(ABC):  # noqa: B024
 
     def tearDownClass(self) -> None:  # noqa: B027
         """Override in subclass for one-time cleanup."""
+        pass
+
+    def setUp(self) -> None:  # noqa: B027
+        """Override in subclass for setup run before each bud_* step."""
+        pass
+
+    def tearDown(self) -> None:  # noqa: B027
+        """Override in subclass for cleanup run after each bud_* step."""
         pass
 
     def run(self) -> bool:
@@ -281,13 +420,25 @@ class BudTestCase(ABC):  # noqa: B024
         return all_passed
 
     def _discover_test_methods(self) -> list[tuple]:
+        """Return (name, bound method) for each bud_* method in declaration order.
+
+        The class's own methods come first, then those inherited from each base
+        class in method resolution order; an override keeps the subclass position.
+        Raises ValueError when a parameterized step name repeats or any step is longer than
+        MAX_STEP_NAME_LENGTH.
+        """
         methods = []
-        for name in dir(self):
-            if name.startswith("bud_"):
+        seen: set[str] = set()
+        for cls in type(self).__mro__:
+            for name in vars(cls):
+                if not name.startswith("bud_") or name in seen:
+                    continue
+                seen.add(name)
                 method = getattr(self, name)
-                if callable(method):
-                    methods.append((name, method))
-        return sorted(methods, key=lambda x: x[0])
+                if not callable(method):
+                    continue
+                methods.extend(_expand_test_method(name, method))
+        return methods
 
     def _format_assertion_line(
         self, assertion_type: str, msg: str, expected: Any, actual: Any
@@ -305,24 +456,12 @@ class BudTestCase(ABC):  # noqa: B024
         self.log_info(f"{BLUE}{'─' * 60}{RESET}")
 
         self._current_assertions = []
+        self._current_artifacts = []
         start_time = time.time()
-        error_msg = None
-        tb = None
-        passed = True
-
         try:
-            method()
-        except AssertionError as e:
-            passed = False
-            error_msg = str(e)
-            tb = traceback.format_exc() if self.CAPTURE_TRACEBACK else None
-        except Exception as e:
-            passed = False
-            error_msg = str(e)
-            full_tb = traceback.format_exc()
-            tb = full_tb if self.CAPTURE_TRACEBACK else None
-            self._logger.error(f"{RED}UNHANDLED EXCEPTION DURING STEP EXECUTION: {e}{RESET}")
-            self._logger.error(full_tb)
+            passed, error_msg, tb = self._execute_step(method_name, method)
+        finally:
+            self._tear_down_step(method_name)
 
         duration = time.time() - start_time
 
@@ -348,7 +487,58 @@ class BudTestCase(ABC):  # noqa: B024
         if self.bloom_metadata and hasattr(self.bloom_metadata, "get_full_tc_id"):
             result.metadata["tc_id"] = self.bloom_metadata.get_full_tc_id()
 
+        if self._current_artifacts:
+            result.metadata["artifacts"] = list(self._current_artifacts)
+
         return result
+
+    def _execute_step(self, method_name: str, method: Callable) -> tuple:
+        """Execute setup and the step, returning its pass state, error and traceback."""
+        try:
+            self._logger.debug(f"{MAGENTA}Entering setUp for {method_name}{RESET}")
+            self._call_hook(self.setUp)
+            self._logger.debug(f"{MAGENTA}setUp completed for {method_name}{RESET}")
+        except Exception as e:
+            full_tb = traceback.format_exc()
+            self._logger.error(f"{RED}SETUP FAILURE BEFORE STEP {method_name}: {e}{RESET}")
+            self._logger.error(full_tb)
+            return False, f"setUp failed: {e}", full_tb if self.CAPTURE_TRACEBACK else None
+
+        try:
+            if _is_coroutine_step(method):
+                coroutine = method()
+                try:
+                    asyncio.run(coroutine)
+                finally:
+                    coroutine.close()
+            else:
+                method()
+        except AssertionError as e:
+            return False, str(e), traceback.format_exc() if self.CAPTURE_TRACEBACK else None
+        except Exception as e:
+            full_tb = traceback.format_exc()
+            self._logger.error(f"{RED}UNHANDLED EXCEPTION DURING STEP EXECUTION: {e}{RESET}")
+            self._logger.error(full_tb)
+            return False, str(e), full_tb if self.CAPTURE_TRACEBACK else None
+        return True, None, None
+
+    def _tear_down_step(self, method_name: str) -> None:
+        """Run teardown and log cleanup failures."""
+        try:
+            self._logger.debug(f"{MAGENTA}Entering tearDown for {method_name}{RESET}")
+            self._call_hook(self.tearDown)
+            self._logger.debug(f"{MAGENTA}tearDown completed for {method_name}{RESET}")
+        except Exception as e:
+            self._logger.error(f"{RED}CLEANUP FAILURE DURING tearDown: {e}{RESET}")
+
+    def _call_hook(self, hook: Callable[[], None]) -> None:
+        """Call a per-step hook with assertion entries kept out of the step."""
+        step_assertions = self._current_assertions
+        self._current_assertions = []
+        try:
+            hook()
+        finally:
+            self._current_assertions = step_assertions
 
     def _format_assertion_line_for_storage(self, a: TestResult) -> str:
         """Returns a non-ANSI formatted string for database/internal storage."""
@@ -383,7 +573,7 @@ class BudTestCase(ABC):  # noqa: B024
         assertion_type: str = "AssertTrue",
         **kwargs,
     ) -> bool:
-        callsite = self._get_assertion_callsite()
+        callsite = self._get_assertion_callsite(failed=not condition)
         result = TestResult(
             passed=bool(condition),
             message=msg,
@@ -395,7 +585,7 @@ class BudTestCase(ABC):  # noqa: B024
             source_line=callsite.get("source_line"),
             source_function=callsite.get("source_function"),
             code_context=callsite.get("code_context"),
-            traceback=callsite.get("traceback") if not condition else None,
+            traceback=callsite.get("traceback"),
             metadata=kwargs,
             max_result_value_length=self.MAX_RESULT_VALUE_LENGTH,
         )
@@ -418,32 +608,45 @@ class BudTestCase(ABC):  # noqa: B024
 
         return condition
 
-    def _get_assertion_callsite(self) -> dict[str, Any]:
-        if not self.CAPTURE_SOURCE_PATH:
-            callsite = {}
-        else:
-            library_file = Path(__file__).resolve()
-            stack = inspect.stack(context=3)
-            selected = stack[2] if len(stack) > 2 else stack[-1]
-            for frame in stack[1:]:
-                try:
-                    frame_file = Path(frame.filename).resolve()
-                except OSError:
-                    frame_file = Path(frame.filename)
-                if frame_file != library_file:
+    def assertRaises(
+        self, expected_exception: type, msg: str = "", abort_on_fail: bool = False
+    ) -> _AssertRaisesContext:
+        """Return a context manager recording an AssertRaises entry for its block.
+
+        The entry passes when the block raises expected_exception. When the block
+        raises nothing or another exception, the entry fails and the exception is
+        suppressed; with abort_on_fail=True the failure raises AssertionError.
+        """
+        return _AssertRaisesContext(self, expected_exception, msg, abort_on_fail)
+
+    def _get_assertion_callsite(self, failed: bool = False) -> dict[str, Any]:
+        """Return source file, line and function of the first caller outside the library.
+
+        Code context and, with CAPTURE_TRACEBACK, the traceback are added only for a
+        failed assertion.
+        """
+        callsite: dict[str, Any] = {}
+        if self.CAPTURE_SOURCE_PATH:
+            frame: Optional[FrameType] = sys._getframe(1)
+            selected = None
+            while frame is not None:
+                if not _is_library_file(frame.f_code.co_filename):
                     selected = frame
                     break
+                frame = frame.f_back
+            if selected is None:
+                selected = sys._getframe(2)
             callsite = {
-                "source_file": selected.filename,
-                "source_line": selected.lineno,
-                "source_function": selected.function,
-                "code_context": (
-                    "".join(selected.code_context).strip() if selected.code_context else None
-                ),
+                "source_file": selected.f_code.co_filename,
+                "source_line": selected.f_lineno,
+                "source_function": selected.f_code.co_name,
             }
+            if failed:
+                context = inspect.getframeinfo(selected, context=3).code_context
+                callsite["code_context"] = "".join(context).strip() if context else None
 
-        if self.CAPTURE_TRACEBACK:
-            callsite["traceback"] = "".join(traceback.format_stack()[:-1]).strip()
+        if failed and self.CAPTURE_TRACEBACK:
+            callsite["traceback"] = "".join(traceback.format_stack(sys._getframe(1))).strip()
 
         return callsite
 
@@ -663,6 +866,79 @@ class BudTestCase(ABC):  # noqa: B024
             abort_on_fail=abort_on_fail,
             assertion_type="AssertRegex",
             **kwargs,
+        )
+
+    def require(self, condition: bool, msg: str = "", **kwargs) -> bool:
+        """Record an AssertRequire entry and stop the step when condition is false."""
+        return self.assertTrue(
+            condition,
+            msg=msg,
+            abort_on_fail=True,
+            assertion_type="AssertRequire",
+            **kwargs,
+        )
+
+    def attach_artifact(self, path: Union[str, Path], name: Optional[str] = None) -> None:
+        """Record an existing file as an artifact of the current step.
+
+        The absolute path and the name, the file name by default, are added to
+        the step result's metadata["artifacts"]. A path that is not an existing
+        file records a failed AttachArtifact entry and raises AssertionError.
+        """
+        file_path = Path(os.path.abspath(path))
+        if not file_path.is_file():
+            self.assertTrue(
+                False,
+                msg=f"Artifact file not found: {path}",
+                expected="existing file",
+                actual=str(file_path),
+                abort_on_fail=True,
+                assertion_type="AttachArtifact",
+            )
+        self._current_artifacts.append({"path": str(file_path), "name": name or file_path.name})
+
+    def waitUntil(
+        self,
+        condition_fn: Callable[[], bool],
+        timeout: float = 10.0,
+        poll_interval: float = 0.5,
+        msg: str = "",
+        abort_on_fail: bool = False,
+    ) -> bool:
+        """Poll condition_fn until it returns True or timeout seconds pass.
+
+        Records an AssertWaitUntil entry whose metadata holds elapsed_seconds,
+        timeout_seconds and poll_interval_seconds. An exception raised by
+        condition_fn counts as not yet true; on timeout the last one is recorded
+        as last_exception.
+        """
+        start = time.monotonic()
+        last_exception: Optional[Exception] = None
+        while True:
+            try:
+                met = bool(condition_fn())
+            except Exception as e:
+                met = False
+                last_exception = e
+            elapsed = time.monotonic() - start
+            if met or elapsed >= timeout:
+                break
+            time.sleep(min(poll_interval, timeout - elapsed))
+        metadata: dict[str, Any] = {
+            "elapsed_seconds": round(elapsed, 3),
+            "timeout_seconds": timeout,
+            "poll_interval_seconds": poll_interval,
+        }
+        if not met and last_exception is not None:
+            metadata["last_exception"] = f"{type(last_exception).__name__}: {last_exception}"
+        return self.assertTrue(
+            met,
+            msg=msg,
+            expected=f"condition true within {timeout}s",
+            actual=f"{'true' if met else 'not true'} after {elapsed:.3f}s",
+            abort_on_fail=abort_on_fail,
+            assertion_type="AssertWaitUntil",
+            **metadata,
         )
 
     def _truncate_value(self, value: str) -> str:

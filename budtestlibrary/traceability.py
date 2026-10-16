@@ -82,6 +82,18 @@ def _load(path: Path):
     return module
 
 
+def _class_refs(module, path: Path) -> Iterator[TestClassRef]:
+    """Yield references to test classes declared by the loaded module."""
+    for name, obj in inspect.getmembers(module, inspect.isclass):
+        if not issubclass(obj, BudTestCase) or obj is BudTestCase:
+            continue
+        if obj.__module__ != module.__name__:
+            continue
+        metadata = getattr(obj, "bloom_metadata", None)
+        tc_id = metadata.get_full_tc_id() if hasattr(metadata, "get_full_tc_id") else None
+        yield TestClassRef(name=name, module=module.__name__, path=str(path), tc_id=tc_id)
+
+
 def collect(root: Path) -> TraceabilityReport:
     """Import every module under ``root`` and read the Bloom ids its tests claim."""
 
@@ -95,19 +107,11 @@ def collect(root: Path) -> TraceabilityReport:
             report.unreadable.append((str(path), f"{type(exc).__name__}: {exc}"))
             continue
 
-        for name, obj in inspect.getmembers(module, inspect.isclass):
-            if not issubclass(obj, BudTestCase) or obj is BudTestCase:
-                continue
-            if obj.__module__ != module.__name__:
-                continue
-
-            metadata = getattr(obj, "bloom_metadata", None)
-            tc_id = metadata.get_full_tc_id() if hasattr(metadata, "get_full_tc_id") else None
-            ref = TestClassRef(name=name, module=module.__name__, path=str(path), tc_id=tc_id)
-            if tc_id is None:
+        for ref in _class_refs(module, path):
+            if ref.tc_id is None:
                 report.untraced.append(ref)
             else:
-                traced[tc_id].append(ref)
+                traced[ref.tc_id].append(ref)
 
     report.traced = dict(traced)
     return report

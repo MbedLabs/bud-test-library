@@ -2,6 +2,23 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
+## [Unreleased]
+
+## [1.2.0] — 2026-10-15
+
+### Added
+- `attach_artifact(path, name=None)` records an existing file on the current step's result as `metadata["artifacts"]`, a list of `{"path": <absolute path>, "name": <name or file name>}`, present only on steps that attached a file. Inside a step, a path that is not an existing file records a failed `AttachArtifact` entry and stops the step; inside `setUp()` it is a setup failure and inside `tearDown()` it is logged, as for other errors in those hooks. A call from `setUpClass()` or `tearDownClass()` is not recorded; a missing file in `setUpClass()` fails the run like any other `setUpClass()` error.
+- `waitUntil(condition_fn, timeout=10.0, poll_interval=0.5, msg="", abort_on_fail=False)` polls a condition until it is true or the timeout passes, returns whether it was met and records an `AssertWaitUntil` entry with `elapsed_seconds`, `timeout_seconds` and `poll_interval_seconds` in its metadata. An exception from the condition counts as not yet true; on timeout the last one is recorded as `last_exception`.
+- `require(condition, msg="", **kwargs)` records an `AssertRequire` entry and, when the condition is false, raises `AssertionError` so the step stops at once.
+- `assertRaises(expected_exception, msg="", abort_on_fail=False)` context manager records an `AssertRaises` entry: passed when the block raises the expected exception (or a subclass), failed when it raises nothing or a different exception, which is then suppressed. With `abort_on_fail=True` a failure raises `AssertionError`. An unexpected exception that is not an `Exception` subclass (such as `KeyboardInterrupt`, `SystemExit` or `asyncio.CancelledError`) passes through unrecorded.
+- `async def bud_` steps, parameterized ones included, run to completion with `asyncio.run()`; their assertions and unhandled exceptions are recorded like those of any step. A step called from inside an already running event loop fails with the `RuntimeError` from `asyncio.run()`.
+- `setUp()` and `tearDown()` on `BudTestCase` run before and after each `bud_` step; `tearDown()` runs even when the step fails. Assertions called inside them are logged but not recorded on the step. An aborting assertion in `setUp()` is a setup error. Existing subclass overrides of these hooks now run once per step. A `setUp()` error skips the step and fails it with `setUp failed: <error>`; a `tearDown()` error is logged and leaves the step result unchanged. Their log lines appear at DEBUG level. A step's `duration_seconds` covers `setUp()`, the method and `tearDown()`.
+- `@parameterized(data)` runs a `bud_` method once per data item as separate steps named `<method>[<id>]`, each with its own result; a single value is passed as one argument, a tuple as positional arguments, a dict as keyword arguments. A failing item does not stop the others. All step names, plain or parameterized, must fit within 255 characters; parameterized names must also be unique. An invalid name fails the run after `setUpClass()` and before any step executes. Exported from `budtestlibrary`.
+
+### Changed
+- Assertion source capture walks the call frames; `inspect.stack()` is no longer called. Source file, line and function are recorded as before; source lines (`code_context`) and the traceback are built only for a failed assertion, so a passing assertion no longer carries `code_context`.
+- `bud_` methods run in the order they are declared in the test class instead of alphabetical order, so numeric prefixes are no longer needed to order steps. A subclass's own methods run before inherited ones; an override runs in the subclass's position. A suite whose methods are declared in a different order than their alphabetical one now runs in the declared order. Methods are found on the class and its bases; a `bud_` attribute set on an instance is no longer run.
+
 ## [1.1.0] — 2026-09-09
 
 ### Added

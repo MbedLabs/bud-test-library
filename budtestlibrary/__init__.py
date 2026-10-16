@@ -16,7 +16,7 @@ from importlib.metadata import version
 from pathlib import Path
 
 from budtestlibrary.bloom_metadata import BloomMetaData
-from budtestlibrary.budtestcase import BudTestCase
+from budtestlibrary.budtestcase import BudTestCase, parameterized
 from budtestlibrary.config import BudConfig, get_default_config
 from budtestlibrary.flash_event import FlashEvent, FlashFailure, FlashSuccess
 
@@ -45,6 +45,7 @@ __email__ = "dev@embedlabs.net"
 
 __all__ = [
     "BudTestCase",
+    "parameterized",
     "BloomMetaData",
     "FlashEvent",
     "FlashSuccess",

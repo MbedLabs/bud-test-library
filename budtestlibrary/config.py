@@ -47,7 +47,7 @@ class BudConfig:
     runner_account: Optional[str] = None
     runner_token: Optional[str] = None
     runner_socket_port: int = 53035
-    runner_timeout: int = -1  # -1 = unlimited
+    runner_timeout: int = -1
 
     # GitHub/GitLab configuration
     config_project_api_url: Optional[str] = None
