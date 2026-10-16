@@ -458,55 +458,10 @@ class BudTestCase(ABC):  # noqa: B024
         self._current_assertions = []
         self._current_artifacts = []
         start_time = time.time()
-        error_msg = None
-        tb = None
-        passed = True
-
         try:
-            setup_failed = False
-            try:
-                self._logger.debug(f"{MAGENTA}Entering setUp for {method_name}{RESET}")
-                self._call_hook(self.setUp)
-                self._logger.debug(f"{MAGENTA}setUp completed for {method_name}{RESET}")
-            except Exception as e:
-                setup_failed = True
-                passed = False
-                error_msg = f"setUp failed: {e}"
-                full_tb = traceback.format_exc()
-                tb = full_tb if self.CAPTURE_TRACEBACK else None
-                self._logger.error(f"{RED}SETUP FAILURE BEFORE STEP {method_name}: {e}{RESET}")
-                self._logger.error(full_tb)
-
-            if not setup_failed:
-                try:
-                    if _is_coroutine_step(method):
-                        coroutine = method()
-                        try:
-                            asyncio.run(coroutine)
-                        finally:
-                            coroutine.close()
-                    else:
-                        method()
-                except AssertionError as e:
-                    passed = False
-                    error_msg = str(e)
-                    tb = traceback.format_exc() if self.CAPTURE_TRACEBACK else None
-                except Exception as e:
-                    passed = False
-                    error_msg = str(e)
-                    full_tb = traceback.format_exc()
-                    tb = full_tb if self.CAPTURE_TRACEBACK else None
-                    self._logger.error(
-                        f"{RED}UNHANDLED EXCEPTION DURING STEP EXECUTION: {e}{RESET}"
-                    )
-                    self._logger.error(full_tb)
+            passed, error_msg, tb = self._execute_step(method_name, method)
         finally:
-            try:
-                self._logger.debug(f"{MAGENTA}Entering tearDown for {method_name}{RESET}")
-                self._call_hook(self.tearDown)
-                self._logger.debug(f"{MAGENTA}tearDown completed for {method_name}{RESET}")
-            except Exception as e:
-                self._logger.error(f"{RED}CLEANUP FAILURE DURING tearDown: {e}{RESET}")
+            self._tear_down_step(method_name)
 
         duration = time.time() - start_time
 
@@ -536,6 +491,45 @@ class BudTestCase(ABC):  # noqa: B024
             result.metadata["artifacts"] = list(self._current_artifacts)
 
         return result
+
+    def _execute_step(self, method_name: str, method: Callable) -> tuple:
+        """Execute setup and the step, returning its pass state, error and traceback."""
+        try:
+            self._logger.debug(f"{MAGENTA}Entering setUp for {method_name}{RESET}")
+            self._call_hook(self.setUp)
+            self._logger.debug(f"{MAGENTA}setUp completed for {method_name}{RESET}")
+        except Exception as e:
+            full_tb = traceback.format_exc()
+            self._logger.error(f"{RED}SETUP FAILURE BEFORE STEP {method_name}: {e}{RESET}")
+            self._logger.error(full_tb)
+            return False, f"setUp failed: {e}", full_tb if self.CAPTURE_TRACEBACK else None
+
+        try:
+            if _is_coroutine_step(method):
+                coroutine = method()
+                try:
+                    asyncio.run(coroutine)
+                finally:
+                    coroutine.close()
+            else:
+                method()
+        except AssertionError as e:
+            return False, str(e), traceback.format_exc() if self.CAPTURE_TRACEBACK else None
+        except Exception as e:
+            full_tb = traceback.format_exc()
+            self._logger.error(f"{RED}UNHANDLED EXCEPTION DURING STEP EXECUTION: {e}{RESET}")
+            self._logger.error(full_tb)
+            return False, str(e), full_tb if self.CAPTURE_TRACEBACK else None
+        return True, None, None
+
+    def _tear_down_step(self, method_name: str) -> None:
+        """Run teardown and log cleanup failures."""
+        try:
+            self._logger.debug(f"{MAGENTA}Entering tearDown for {method_name}{RESET}")
+            self._call_hook(self.tearDown)
+            self._logger.debug(f"{MAGENTA}tearDown completed for {method_name}{RESET}")
+        except Exception as e:
+            self._logger.error(f"{RED}CLEANUP FAILURE DURING tearDown: {e}{RESET}")
 
     def _call_hook(self, hook: Callable[[], None]) -> None:
         """Call a per-step hook with assertion entries kept out of the step."""

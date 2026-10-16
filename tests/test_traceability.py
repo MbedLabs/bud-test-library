@@ -131,7 +131,8 @@ class TestTheCommand:
         assert main(["check", str(root)]) == 1
         out = capsys.readouterr().out
         assert "FLT-TC-001 is claimed by 2 test classes" in out
-        assert "BrakeTest" in out and "ThermalTest" in out
+        assert "BrakeTest" in out
+        assert "ThermalTest" in out
 
     def test_strict_fails_on_a_class_that_claims_nothing(self, suite):
         root, write = suite
