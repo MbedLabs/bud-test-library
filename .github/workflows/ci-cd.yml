@@ -30,8 +30,6 @@ jobs:
         run: ruff check budtestlibrary tests
 
       - name: Run tests
-        env:
-          PACKAGE_AUTHOR: ${{ secrets.PACKAGE_AUTHOR }}
         run: pytest
 
   build:

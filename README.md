@@ -420,23 +420,10 @@ pytest tests/ -v
 
 ## Licence
 
-`budtestlibrary` is permanent free and open-source software licensed under the
+`budtestlibrary` is open-source software licensed under the
 **GNU Affero General Public License v3.0 only (`AGPL-3.0-only`)**.
 
-No paid EmbedLabs licence is required to use `budtestlibrary`, including for
-commercial use, provided the AGPL terms are followed. Accepted community
-contributions remain publicly available under `AGPL-3.0-only` and will not
-become proprietary-only.
-
-Bud and Bloom are separate source-available applications. Commercial licensing,
-deployment, integration, and support offered through `sales@embedlabs.de`
-applies to those applications and services—not to the `budtestlibrary` package
-licence.
-
-Technical, security, and contribution questions: `dev@embedlabs.net`.
-
-Copyright (C) 2026 Mohamed Amine El Omari Alaoui, operating under the name
-EmbedLabs.
+Copyright © 2026 EmbedLabs, operated by Mohamed Amine El Omari Alaoui.
 
 - [Full licence](https://github.com/MbedLabs/bud-test-library/blob/main/LICENSE)
 - [Contributing](https://github.com/MbedLabs/bud-test-library/blob/main/CONTRIBUTING.md)
