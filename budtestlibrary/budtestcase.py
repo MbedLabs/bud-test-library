@@ -261,6 +261,33 @@ def _bind_parameters(method: Callable, item: Any) -> Callable:
     return functools.partial(method, item)
 
 
+def _validate_step_name(method_name: str, step_name: str) -> None:
+    """Validate a discovered step's maximum name length."""
+    if len(step_name) > MAX_STEP_NAME_LENGTH:
+        raise ValueError(
+            f"{method_name}: step name is {len(step_name)} characters, "
+            f"over the {MAX_STEP_NAME_LENGTH}-character limit"
+        )
+
+
+def _expand_test_method(name: str, method: Callable) -> list[tuple]:
+    """Return a method's named steps with their parameter items bound."""
+    parameters = getattr(method, _PARAMETERS_ATTRIBUTE, None)
+    if parameters is None:
+        _validate_step_name(name, name)
+        return [(name, method)]
+    methods = []
+    step_names: set[str] = set()
+    for item in parameters:
+        step_name = f"{name}[{_parameter_id(item)}]"
+        if step_name in step_names:
+            raise ValueError(f"{name}: step name {step_name} repeats")
+        _validate_step_name(name, step_name)
+        step_names.add(step_name)
+        methods.append((step_name, _bind_parameters(method, item)))
+    return methods
+
+
 class BudTestCase(ABC):  # noqa: B024
     """
     Base class for all test cases in the bud test framework.
@@ -410,27 +437,7 @@ class BudTestCase(ABC):  # noqa: B024
                 method = getattr(self, name)
                 if not callable(method):
                     continue
-                parameters = getattr(method, _PARAMETERS_ATTRIBUTE, None)
-                if parameters is None:
-                    if len(name) > MAX_STEP_NAME_LENGTH:
-                        raise ValueError(
-                            f"{name}: step name is {len(name)} characters, "
-                            f"over the {MAX_STEP_NAME_LENGTH}-character limit"
-                        )
-                    methods.append((name, method))
-                    continue
-                step_names: set[str] = set()
-                for item in parameters:
-                    step_name = f"{name}[{_parameter_id(item)}]"
-                    if step_name in step_names:
-                        raise ValueError(f"{name}: step name {step_name} repeats")
-                    if len(step_name) > MAX_STEP_NAME_LENGTH:
-                        raise ValueError(
-                            f"{name}: step name is {len(step_name)} characters, "
-                            f"over the {MAX_STEP_NAME_LENGTH}-character limit"
-                        )
-                    step_names.add(step_name)
-                    methods.append((step_name, _bind_parameters(method, item)))
+                methods.extend(_expand_test_method(name, method))
         return methods
 
     def _format_assertion_line(

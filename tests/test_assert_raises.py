@@ -82,9 +82,10 @@ class TestAssertRaises:
         assert entry.actual == "SystemExit: 2"
 
     def test_unexpected_base_exception_passes_through(self, tc):
+        cancellation = asyncio.CancelledError()
         with pytest.raises(asyncio.CancelledError):
             with tc.assertRaises(ValueError):
-                raise asyncio.CancelledError()
+                raise cancellation
         assert tc._current_assertions == []
 
     def test_entry_points_at_the_test_code(self, tc):
