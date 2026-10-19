@@ -2,7 +2,7 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
-## [Unreleased]
+## [1.3.0] - unreleased
 
 ## [1.2.0] — 2026-10-15
 
