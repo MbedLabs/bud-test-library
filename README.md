@@ -90,7 +90,7 @@ metadata when the corresponding Bud project is linked to Bloom.
 ### Checking what a suite claims
 
 A `tc_id` is typed by hand. If it is wrong, Bloom reports it as unmatched, Bud
-records a warning on the run, and nothing else happens — the run is green and the
+records a warning on the run, and nothing else happens: the run is green and the
 test case reads as never executed. If two classes claim the same id, Bud coalesces
 them into one result and one outcome silently replaces the other.
 
@@ -352,7 +352,7 @@ event.execute("bootloader.bin", addr=0x08000000)  # explicit address
 ```
 
 Implementations that do not need an address may keep the single-argument
-`flash(self, firmware_path)` signature — `execute()` detects this and calls
+`flash(self, firmware_path)` signature; `execute()` detects this and calls
 them unchanged. Passing an explicit `addr` to such an implementation returns a
 `FlashFailure` explaining that `addr=None` must be added to its signature.
 
