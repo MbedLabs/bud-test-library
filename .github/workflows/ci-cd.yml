@@ -38,15 +38,15 @@ jobs:
           ORG_MAINTAINER: ${{ secrets.ORG_MAINTAINER }}
         run: pytest
 
-      - name: Run bandit security scan
+      - name: Install security scanners
         run: |
-          pip install bandit
-          python -m bandit -r budtestlibrary/ -ll
+          pip install --require-hashes --only-binary :all: -r .github/ci-requirements.txt
+
+      - name: Run bandit security scan
+        run: python -m bandit -r budtestlibrary/ -ll
 
       - name: Run pip-audit
-        run: |
-          pip install pip-audit
-          pip-audit
+        run: pip-audit
 
   build:
     needs: quality
