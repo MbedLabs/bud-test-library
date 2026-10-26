@@ -5,7 +5,7 @@ All notable changes to `budtestlibrary` will be documented in this file.
 ## [1.3.0] - unreleased
 
 ### Changed
-- The `dev` extra requires black only on Python 3.10 and later (`black~=26.5; python_version >= "3.10"`); on Python 3.9, `budtestlibrary[dev]` installs without black.
+- Python 3.11 or later is required; Python 3.9 and 3.10 are no longer supported.
 
 ## [1.2.0] — 2026-10-15
 
