@@ -4,7 +4,7 @@ from budtestlibrary import BloomMetaData, BudTestCase
 
 
 class PowerRailHILTest(BudTestCase):
-    bloom_metadata = BloomMetaData("PWR", "101")
+    bloom_metadata = BloomMetaData("VCU", "101")
 
     def setUpClass(self):
         self.log_info("Opening serial session to the target board")
