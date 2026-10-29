@@ -219,7 +219,7 @@ class FlashEvent(ABC):
         Get the project name for the firmware.
 
         Returns:
-            Project name string (e.g., "BMS_Master", "BigPack").
+            Project name string (e.g., "example_project").
         """
         pass
 
