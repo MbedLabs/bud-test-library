@@ -39,25 +39,25 @@ def suite(tmp_path):
 
 def test_collects_the_bloom_id_each_class_claims(suite):
     root, write = suite
-    write("test_brakes.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
-    write("test_thermal.py", TRACED.format(name="ThermalTest", project="FLT", suffix="002"))
+    write("test_brakes.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
+    write("test_thermal.py", TRACED.format(name="ThermalTest", project="PRJ", suffix="002"))
 
     report = collect(root)
 
-    assert sorted(report.traced) == ["FLT-TC-001", "FLT-TC-002"]
+    assert sorted(report.traced) == ["PRJ-TC-001", "PRJ-TC-002"]
     assert report.untraced == []
     assert report.ok
 
 
 def test_finds_two_classes_claiming_one_test_case(suite):
     root, write = suite
-    write("test_brakes.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
-    write("test_thermal.py", TRACED.format(name="ThermalTest", project="FLT", suffix="001"))
+    write("test_brakes.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
+    write("test_thermal.py", TRACED.format(name="ThermalTest", project="PRJ", suffix="001"))
 
     report = collect(root)
 
-    assert list(report.duplicates) == ["FLT-TC-001"]
-    assert sorted(ref.name for ref in report.duplicates["FLT-TC-001"]) == [
+    assert list(report.duplicates) == ["PRJ-TC-001"]
+    assert sorted(ref.name for ref in report.duplicates["PRJ-TC-001"]) == [
         "BrakeTest",
         "ThermalTest",
     ]
@@ -97,40 +97,40 @@ def test_the_base_class_is_not_a_test_case(suite):
 
 def test_a_class_is_counted_once_however_many_modules_import_it(suite):
     root, write = suite
-    write("test_brakes.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
+    write("test_brakes.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
     write("test_reexport.py", "from test_brakes import BrakeTest\n")
 
     report = collect(root)
 
-    assert list(report.traced) == ["FLT-TC-001"]
-    assert len(report.traced["FLT-TC-001"]) == 1
+    assert list(report.traced) == ["PRJ-TC-001"]
+    assert len(report.traced["PRJ-TC-001"]) == 1
 
 
 def test_a_single_file_can_be_checked(suite):
     root, write = suite
-    write("test_brakes.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
+    write("test_brakes.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
 
     report = collect(root / "test_brakes.py")
 
-    assert list(report.traced) == ["FLT-TC-001"]
+    assert list(report.traced) == ["PRJ-TC-001"]
 
 
 class TestTheCommand:
     def test_a_clean_suite_passes(self, suite, capsys):
         root, write = suite
-        write("test_brakes.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
+        write("test_brakes.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
 
         assert main(["check", str(root)]) == 0
-        assert "FLT-TC-001" not in capsys.readouterr().out
+        assert "PRJ-TC-001" not in capsys.readouterr().out
 
     def test_a_duplicate_fails_and_names_both(self, suite, capsys):
         root, write = suite
-        write("a.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
-        write("b.py", TRACED.format(name="ThermalTest", project="FLT", suffix="001"))
+        write("a.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
+        write("b.py", TRACED.format(name="ThermalTest", project="PRJ", suffix="001"))
 
         assert main(["check", str(root)]) == 1
         out = capsys.readouterr().out
-        assert "FLT-TC-001 is claimed by 2 test classes" in out
+        assert "PRJ-TC-001 is claimed by 2 test classes" in out
         assert "BrakeTest" in out
         assert "ThermalTest" in out
 
@@ -143,22 +143,22 @@ class TestTheCommand:
 
     def test_json_is_machine_readable(self, suite, capsys):
         root, write = suite
-        write("a.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
-        write("b.py", TRACED.format(name="ThermalTest", project="FLT", suffix="001"))
+        write("a.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
+        write("b.py", TRACED.format(name="ThermalTest", project="PRJ", suffix="001"))
 
         main(["check", str(root), "--json"])
 
         report = json.loads(capsys.readouterr().out)
         assert report["ok"] is False
-        assert list(report["duplicates"]) == ["FLT-TC-001"]
+        assert list(report["duplicates"]) == ["PRJ-TC-001"]
 
     def test_list_prints_the_map(self, suite, capsys):
         root, write = suite
-        write("a.py", TRACED.format(name="BrakeTest", project="FLT", suffix="001"))
+        write("a.py", TRACED.format(name="BrakeTest", project="PRJ", suffix="001"))
 
         main(["check", str(root), "--list"])
 
-        assert "FLT-TC-001" in capsys.readouterr().out
+        assert "PRJ-TC-001" in capsys.readouterr().out
 
     def test_a_path_that_does_not_exist_is_refused(self, tmp_path, capsys):
         assert main(["check", str(tmp_path / "nowhere")]) == 2
