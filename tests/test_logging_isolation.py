@@ -125,7 +125,6 @@ class TestConsoleEncoding:
     def _cp1252_stream(self):
         import io
 
-        # What a piped stderr looks like on a Windows CI runner.
         return io.TextIOWrapper(
             io.BytesIO(), encoding="cp1252", errors="backslashreplace", newline="\n"
         )

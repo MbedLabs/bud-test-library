@@ -60,8 +60,6 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         # Get timestamp with timezone
         dt = datetime.fromtimestamp(record.created).astimezone()
-        # %z, not %Z: Windows spells the zone out in the system language,
-        # e.g. "Mitteleuropäische Zeit", which a CI log can garble.
         timestamp = dt.strftime("%Y-%m-%d %H:%M:%S %z")
 
         # Bold White timestamp
@@ -81,14 +79,8 @@ class ColoredFormatter(logging.Formatter):
 
 
 class Utf8StreamHandler(logging.StreamHandler):
-    """StreamHandler that writes UTF-8 even when the stream's own encoding cannot.
-
-    On Windows a piped stderr (any CI runner) uses the ANSI code page, which has
-    no check marks or box drawing characters; Python then writes them as
-    ``\\u2713``. Records are encoded as UTF-8 and written to the stream's binary
-    buffer in that case. Streams that are already UTF-8, as on Linux and macOS,
-    and streams without a binary buffer take the normal path.
-    """
+    """Write each record as UTF-8 to the stream's binary buffer when the stream's
+    encoding is not UTF-8; write to the stream itself otherwise."""
 
     def emit(self, record):
         stream = self.stream
@@ -108,6 +100,7 @@ class Utf8StreamHandler(logging.StreamHandler):
 
 
 def _is_utf8(encoding: Optional[str]) -> bool:
+    """Return whether the encoding name resolves to the UTF-8 codec."""
     if not encoding:
         return False
     try:
