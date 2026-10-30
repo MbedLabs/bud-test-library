@@ -117,3 +117,75 @@ class TestConsoleColoredLogging:
         tc.assertTrue(True, msg="color test")
         output = stream.getvalue()
         assert "\033[" in output
+
+
+class TestConsoleEncoding:
+    """The console handler writes UTF-8 whatever the stream's own encoding is."""
+
+    def _cp1252_stream(self):
+        import io
+
+        # What a piped stderr looks like on a Windows CI runner.
+        return io.TextIOWrapper(
+            io.BytesIO(), encoding="cp1252", errors="backslashreplace", newline="\n"
+        )
+
+    def test_non_utf8_stream_gets_utf8_bytes(self):
+        from budtestlibrary.budtestcase import Utf8StreamHandler
+
+        stream = self._cp1252_stream()
+        logger = logging.getLogger("budtestlibrary.test_encoding_cp1252")
+        logger.propagate = False
+        handler = Utf8StreamHandler(stream)
+        logger.addHandler(handler)
+        try:
+            logger.warning("✓ PASSED ──")
+        finally:
+            logger.removeHandler(handler)
+
+        raw = stream.buffer.getvalue()
+        assert raw.decode("utf-8") == "✓ PASSED ──\n"
+        assert b"\u2713" not in raw
+
+    def test_utf8_and_text_only_streams_are_unchanged(self):
+        import io
+
+        from budtestlibrary.budtestcase import Utf8StreamHandler
+
+        utf8 = io.TextIOWrapper(io.BytesIO(), encoding="utf-8", newline="\n")
+        text_only = io.StringIO()
+        logger = logging.getLogger("budtestlibrary.test_encoding_utf8")
+        logger.propagate = False
+        handlers = [Utf8StreamHandler(utf8), Utf8StreamHandler(text_only)]
+        for handler in handlers:
+            logger.addHandler(handler)
+        try:
+            logger.warning("✓ ok")
+        finally:
+            for handler in handlers:
+                logger.removeHandler(handler)
+
+        utf8.flush()
+        assert utf8.buffer.getvalue().decode("utf-8") == "✓ ok\n"
+        assert text_only.getvalue() == "✓ ok\n"
+
+    def test_console_handler_is_utf8_handler(self):
+        from budtestlibrary.budtestcase import Utf8StreamHandler
+
+        class EncodingTest(BudTestCase):
+            def bud_check(self):
+                self.assertTrue(True, msg="ok")
+
+        tc = EncodingTest()
+        tc.set_loglevel(logging.CRITICAL)
+        tc.run()
+        assert isinstance(tc._console_handler, Utf8StreamHandler)
+
+    def test_timestamp_uses_numeric_utc_offset(self):
+        import re
+
+        from budtestlibrary.budtestcase import ColoredFormatter
+
+        record = logging.LogRecord("x", logging.INFO, __file__, 1, "msg", None, None)
+        line = ColoredFormatter().format(record)
+        assert re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}", line)

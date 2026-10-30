@@ -8,6 +8,7 @@ Provides:
 """
 
 import asyncio
+import codecs
 import functools
 import inspect
 import logging
@@ -59,7 +60,9 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         # Get timestamp with timezone
         dt = datetime.fromtimestamp(record.created).astimezone()
-        timestamp = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
+        # %z, not %Z: Windows spells the zone out in the system language,
+        # e.g. "Mitteleuropäische Zeit", which a CI log can garble.
+        timestamp = dt.strftime("%Y-%m-%d %H:%M:%S %z")
 
         # Bold White timestamp
         colored_ts = f"{BOLD}{WHITE}{timestamp}{RESET}"
@@ -75,6 +78,42 @@ class ColoredFormatter(logging.Formatter):
         else:
             # Clean format for assertions: Timestamp - ClassName - Status/Message
             return f"{colored_ts} - {logger_name} - {message}"
+
+
+class Utf8StreamHandler(logging.StreamHandler):
+    """StreamHandler that writes UTF-8 even when the stream's own encoding cannot.
+
+    On Windows a piped stderr (any CI runner) uses the ANSI code page, which has
+    no check marks or box drawing characters; Python then writes them as
+    ``\\u2713``. Records are encoded as UTF-8 and written to the stream's binary
+    buffer in that case. Streams that are already UTF-8, as on Linux and macOS,
+    and streams without a binary buffer take the normal path.
+    """
+
+    def emit(self, record):
+        stream = self.stream
+        buffer = getattr(stream, "buffer", None)
+        if buffer is None or _is_utf8(getattr(stream, "encoding", None)):
+            super().emit(record)
+            return
+        try:
+            msg = self.format(record) + self.terminator
+            stream.flush()
+            buffer.write(msg.encode("utf-8"))
+            buffer.flush()
+        except RecursionError:
+            raise
+        except Exception:
+            self.handleError(record)
+
+
+def _is_utf8(encoding: Optional[str]) -> bool:
+    if not encoding:
+        return False
+    try:
+        return codecs.lookup(encoding).name == "utf-8"
+    except LookupError:
+        return False
 
 
 @dataclass
@@ -954,7 +993,7 @@ class BudTestCase(ABC):  # noqa: B024
         """Configures the instance logger to show LEVEL and NAME for the Test Case header."""
         logger = self._logger
         logger.handlers.clear()
-        handler = logging.StreamHandler()
+        handler = Utf8StreamHandler()
         handler.setFormatter(ColoredFormatter(show_level=True))
         logger.addHandler(handler)
         logger.setLevel(self._log_level)
