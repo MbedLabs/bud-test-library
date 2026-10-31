@@ -6,6 +6,10 @@ All notable changes to `budtestlibrary` will be documented in this file.
 
 ### Changed
 - Python 3.11 or later is required; Python 3.9 and 3.10 are no longer supported.
+- Console log timestamps end in the numeric UTC offset (`+0100`) instead of the time zone name. On Windows the name is spelled out in the system language, such as `Mitteleuropäische Zeit`, and showed up garbled in CI logs.
+
+### Fixed
+- Console log lines keep `✓`, `✗` and `─` when stderr is not UTF-8, as on a Windows CI runner, where they were written as `✓`, `✗` and `─`. The console handler, `Utf8StreamHandler`, writes UTF-8 to such a stream; a UTF-8 stream, as on Linux and macOS, is written as before.
 
 ## [1.2.0] — 2026-10-15
 

@@ -177,14 +177,14 @@ class TestMethodResultDict:
             error_message="test failed",
             summary_message="test failed",
             traceback="Traceback (most recent call last):\n  ...",
-            metadata={"tc_id": "PROJ-TC-001"},
+            metadata={"tc_id": "PRJ-TC-001"},
         )
         d = mr.to_dict()
         assert d["passed"] is False
         assert d["error_message"] == "test failed"
         assert d["summary_message"] == "test failed"
         assert d["traceback"] == "Traceback (most recent call last):\n  ..."
-        assert d["metadata"] == {"tc_id": "PROJ-TC-001"}
+        assert d["metadata"] == {"tc_id": "PRJ-TC-001"}
 
     def test_multiple_assertions_in_method(self):
         assertions = [

@@ -155,7 +155,7 @@ class TestExampleResults:
         results = tc.get_results()
         for r in results:
             assert (
-                r.metadata.get("tc_id") == "MCU-TC-001"
+                r.metadata.get("tc_id") == "PRJ-TC-001"
             ), f"Missing or wrong tc_id in {r.method_name}"
 
     def test_flash_event_example(self):

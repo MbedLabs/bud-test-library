@@ -219,7 +219,7 @@ class FlashEvent(ABC):
         Get the project name for the firmware.
 
         Returns:
-            Project name string (e.g., "example_project").
+            Project name string (e.g., "Demo Project").
         """
         pass
 

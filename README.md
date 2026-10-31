@@ -104,7 +104,7 @@ exits non-zero on a duplicate, so CI fails on the error rather than on a report
 nobody reads.
 
 ```
-✗ FLT-TC-001 is claimed by 2 test classes:
+✗ PRJ-TC-001 is claimed by 2 test classes:
     tests/test_brakes.py::BrakePressureTest
     tests/test_thermal.py::ThermalSoakTest
 
@@ -114,7 +114,7 @@ nobody reads.
 `--list` prints the `tc_id` to test class map, `--json` emits the same report for a
 pipeline, and `--strict` also fails when a test class claims no Bloom test case.
 
-The command talks to nothing. It cannot tell whether `FLT-TC-001` exists in Bloom,
+The command talks to nothing. It cannot tell whether `PRJ-TC-001` exists in Bloom,
 because this library holds no Bloom address and no credential.
 
 ## Public API
