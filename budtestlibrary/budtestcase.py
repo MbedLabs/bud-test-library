@@ -494,7 +494,7 @@ class BudTestCase(ABC):  # noqa: B024
         )
 
     def _run_test_method(self, method_name: str, method: Callable) -> TestMethodResult:
-        self.log_info(f"\n{BLUE}STEP INVOCATION: {method_name}{RESET}")
+        self.log_info(f"{BLUE}STEP INVOCATION: {method_name}{RESET}")
         self.log_info(f"{BLUE}{'─' * 60}{RESET}")
 
         self._current_assertions = []
