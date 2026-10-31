@@ -187,4 +187,19 @@ class TestConsoleEncoding:
 
         record = logging.LogRecord("x", logging.INFO, __file__, 1, "msg", None, None)
         line = ColoredFormatter().format(record)
-        assert re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}", line)
+        assert re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC[+-]\d{1,2}(:\d{2})?\b", line)
+
+    def test_utc_offset_label(self):
+        from datetime import datetime, timedelta, timezone
+
+        from budtestlibrary.budtestcase import _utc_offset_label
+
+        def at(offset):
+            return datetime(2026, 1, 1, tzinfo=timezone(offset))
+
+        assert _utc_offset_label(at(timedelta(hours=1))) == "UTC+1"
+        assert _utc_offset_label(at(timedelta(hours=2))) == "UTC+2"
+        assert _utc_offset_label(at(timedelta(hours=-3))) == "UTC-3"
+        assert _utc_offset_label(at(timedelta(hours=5, minutes=30))) == "UTC+5:30"
+        assert _utc_offset_label(at(timedelta(hours=-3, minutes=-30))) == "UTC-3:30"
+        assert _utc_offset_label(at(timedelta(0))) == "UTC+0"

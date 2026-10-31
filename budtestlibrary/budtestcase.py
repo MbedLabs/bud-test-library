@@ -20,7 +20,7 @@ import traceback
 from abc import ABC
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import FrameType
 from typing import Any, Callable, Optional, Union
@@ -50,6 +50,16 @@ def _truncate_str(value: str, max_length: int = _DEFAULT_MAX_RESULT_VALUE_LENGTH
     return value
 
 
+def _utc_offset_label(dt: datetime) -> str:
+    """Return the UTC offset of dt as UTC+H, or UTC+H:MM for a part-hour offset."""
+    total_minutes = int((dt.utcoffset() or timedelta(0)).total_seconds()) // 60
+    sign = "-" if total_minutes < 0 else "+"
+    hours, minutes = divmod(abs(total_minutes), 60)
+    if minutes:
+        return f"UTC{sign}{hours}:{minutes:02d}"
+    return f"UTC{sign}{hours}"
+
+
 class ColoredFormatter(logging.Formatter):
     """Custom formatter to color the timestamp and suppress redundant metadata."""
 
@@ -60,7 +70,7 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         # Get timestamp with timezone
         dt = datetime.fromtimestamp(record.created).astimezone()
-        timestamp = dt.strftime("%Y-%m-%d %H:%M:%S %z")
+        timestamp = f"{dt.strftime('%Y-%m-%d %H:%M:%S')} {_utc_offset_label(dt)}"
 
         # Bold White timestamp
         colored_ts = f"{BOLD}{WHITE}{timestamp}{RESET}"
