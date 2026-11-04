@@ -22,4 +22,6 @@ class TestStepHeaderLine:
         header = [line for line in lines if "STEP INVOCATION: bud_check" in line]
         assert len(header) == 1
         assert " - budtestlibrary.FormatTest - " in header[0]
-        assert not any(line.strip() == "" or line.rstrip().endswith("FormatTest -") for line in lines)
+        assert not any(
+            line.strip() == "" or line.rstrip().endswith("FormatTest -") for line in lines
+        )
