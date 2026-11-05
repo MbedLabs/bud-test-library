@@ -411,7 +411,7 @@ black --check budtestlibrary/ examples/
 isort --profile black --check-only budtestlibrary/ examples/
 ruff check budtestlibrary/ examples/
 mypy budtestlibrary/
-pytest tests/ -v
+python -c "import importlib, sys; sys.path.insert(0, 'budtests'); m = importlib.import_module('assertions'); raise SystemExit(0 if m.Assertions().run() else 1)"
 ```
 
 ## Related packages
