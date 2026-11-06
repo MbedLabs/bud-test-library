@@ -122,9 +122,9 @@ class Callsite(BudTestCase):
         entry = results[0].assertions[0]
         support.check_in(
             self,
-            'self.assertTrue(support.BREAKS, msg="fails here")',
+            'self.assertTrue(False, msg="fails here")',
             entry.code_context or "",
-            'the failed entry\'s code context holds the calling line self.assertTrue(support.BREAKS, msg="fails here")',
+            'the failed entry\'s code context holds the calling line self.assertTrue(False, msg="fails here")',
             "the failed entry's code context does not hold the calling line",
         )
         support.check_in(

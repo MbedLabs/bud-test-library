@@ -255,9 +255,9 @@ class Lifecycle(BudTestCase):
 
             class DemoSummaryTest(BudTestCase):
                 def bud_mixed(self):
-                    self.assertTrue(support.HOLDS, msg="one")
+                    self.assertTrue(True, msg="one")
                     self.assertEqual(2, 2, msg="two")
-                    self.assertTrue(support.BREAKS, msg="three")
+                    self.assertTrue(False, msg="three")
                     self.skipAssert("four")
 
 

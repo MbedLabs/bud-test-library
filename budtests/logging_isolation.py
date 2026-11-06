@@ -25,7 +25,7 @@ CHILD_SUITE = """
 
     class DemoConsoleTest(BudTestCase):
         def bud_check(self):
-            self.assertTrue(support.HOLDS, msg="console check")
+            self.assertTrue(True, msg="console check")
 
 
     DemoConsoleTest().run()
