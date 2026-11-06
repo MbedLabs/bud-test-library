@@ -20,7 +20,7 @@ import traceback
 from abc import ABC
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import FrameType
 from typing import Any, Callable, Optional, Union
@@ -42,12 +42,24 @@ RESET = "\033[0m"
 # Maximum length for serialized assertion values (shared with BudTestCase)
 _DEFAULT_MAX_RESULT_VALUE_LENGTH = 5000
 
+_NOT_GIVEN: Any = object()
+
 
 def _truncate_str(value: str, max_length: int = _DEFAULT_MAX_RESULT_VALUE_LENGTH) -> str:
     """Truncate a string to max_length, appending a marker if truncated."""
     if len(value) > max_length:
         return value[:max_length] + "... <truncated>"
     return value
+
+
+def _utc_offset_label(dt: datetime) -> str:
+    """Return the UTC offset of dt as UTC+H, or UTC+H:MM for a part-hour offset."""
+    total_minutes = int((dt.utcoffset() or timedelta(0)).total_seconds()) // 60
+    sign = "-" if total_minutes < 0 else "+"
+    hours, minutes = divmod(abs(total_minutes), 60)
+    if minutes:
+        return f"UTC{sign}{hours}:{minutes:02d}"
+    return f"UTC{sign}{hours}"
 
 
 class ColoredFormatter(logging.Formatter):
@@ -60,7 +72,7 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         # Get timestamp with timezone
         dt = datetime.fromtimestamp(record.created).astimezone()
-        timestamp = dt.strftime("%Y-%m-%d %H:%M:%S %z")
+        timestamp = f"{dt.strftime('%Y-%m-%d %H:%M:%S')} {_utc_offset_label(dt)}"
 
         # Bold White timestamp
         colored_ts = f"{BOLD}{WHITE}{timestamp}{RESET}"
@@ -484,7 +496,7 @@ class BudTestCase(ABC):  # noqa: B024
         )
 
     def _run_test_method(self, method_name: str, method: Callable) -> TestMethodResult:
-        self.log_info(f"\n{BLUE}STEP INVOCATION: {method_name}{RESET}")
+        self.log_info(f"{BLUE}STEP INVOCATION: {method_name}{RESET}")
         self.log_info(f"{BLUE}{'─' * 60}{RESET}")
 
         self._current_assertions = []
@@ -599,8 +611,8 @@ class BudTestCase(ABC):  # noqa: B024
         self,
         condition: bool,
         msg: str = "",
-        expected: Any = None,
-        actual: Any = None,
+        expected: Any = _NOT_GIVEN,
+        actual: Any = _NOT_GIVEN,
         abort_on_fail: bool = False,
         assertion_type: str = "AssertTrue",
         **kwargs,
@@ -610,9 +622,9 @@ class BudTestCase(ABC):  # noqa: B024
             passed=bool(condition),
             message=msg,
             assertion_type=assertion_type,
-            expected=expected if expected is not None else True,
-            actual=actual if actual is not None else condition,
-            result=actual if actual is not None else condition,
+            expected=True if expected is _NOT_GIVEN else expected,
+            actual=condition if actual is _NOT_GIVEN else actual,
+            result=condition if actual is _NOT_GIVEN else actual,
             source_file=callsite.get("source_file"),
             source_line=callsite.get("source_line"),
             source_function=callsite.get("source_function"),

@@ -25,7 +25,7 @@ class BloomMetaData:
             raise ValueError("BloomMetaData.project must be a non-empty string")
         if not self.tc_id_suffix or not self.tc_id_suffix.strip():
             raise ValueError("BloomMetaData.tc_id_suffix must be a non-empty string")
-        if not _TC_ID_SUFFIX_PATTERN.match(self.tc_id_suffix):
+        if not _TC_ID_SUFFIX_PATTERN.fullmatch(self.tc_id_suffix):
             raise ValueError(
                 f"BloomMetaData.tc_id_suffix must match '{_TC_ID_SUFFIX_PATTERN.pattern}', "
                 f"got '{self.tc_id_suffix}'"
