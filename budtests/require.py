@@ -107,7 +107,7 @@ class Require(BudTestCase):
                 connection.send(b"ping")
 
             def bud_next(self):
-                self.assertTrue(True, msg="next step runs")
+                self.assertTrue(support.HOLDS, msg="next step runs")
 
         case = StepTest()
         _, results = support.run(case)

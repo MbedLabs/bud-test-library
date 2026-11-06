@@ -56,62 +56,62 @@ class Assertions(BudTestCase):
         return recorded[0]
 
     def bud_passing_assertion(self):
-        """assertTrue(True) records one passed, not skipped AssertTrue entry with its message."""
+        """assertTrue(support.HOLDS) records one passed, not skipped AssertTrue entry with its message."""
         entry = self._one(
-            lambda tc: tc.assertTrue(True, msg="should pass"),
+            lambda tc: tc.assertTrue(support.HOLDS, msg="should pass"),
             True,
             "AssertTrue",
-            "assertTrue(True)",
+            "assertTrue(support.HOLDS)",
         )
         support.check(
             self,
             entry.skipped,
             False,
-            "assertTrue(True) records an entry that is not marked skipped",
-            "assertTrue(True) recorded an entry marked skipped",
+            "assertTrue(support.HOLDS) records an entry that is not marked skipped",
+            "assertTrue(support.HOLDS) recorded an entry marked skipped",
         )
         support.check(
             self,
             entry.message,
             "should pass",
-            "assertTrue(True) keeps its message 'should pass' in the entry",
-            "assertTrue(True) did not keep its message 'should pass' in the entry",
+            "assertTrue(support.HOLDS) keeps its message 'should pass' in the entry",
+            "assertTrue(support.HOLDS) did not keep its message 'should pass' in the entry",
         )
 
     def bud_failing_assertion(self):
-        """assertTrue(False) records one failed entry with its message, and the step fails."""
-        result = support.step(lambda tc: tc.assertTrue(False, msg="should fail"))
+        """assertTrue(support.BREAKS) records one failed entry with its message, and the step fails."""
+        result = support.step(lambda tc: tc.assertTrue(support.BREAKS, msg="should fail"))
         support.check(
             self,
             len(result.assertions),
             1,
-            "assertTrue(False) records exactly one assertion entry",
-            "assertTrue(False) did not record exactly one assertion entry",
+            "assertTrue(support.BREAKS) records exactly one assertion entry",
+            "assertTrue(support.BREAKS) did not record exactly one assertion entry",
         )
         support.check(
             self,
             result.assertions[0].passed,
             False,
-            "assertTrue(False) records a failed entry",
-            "assertTrue(False) recorded a passed entry",
+            "assertTrue(support.BREAKS) records a failed entry",
+            "assertTrue(support.BREAKS) recorded a passed entry",
         )
         support.check(
             self,
             result.assertions[0].message,
             "should fail",
-            "assertTrue(False) keeps its message 'should fail' in the entry",
-            "assertTrue(False) did not keep its message 'should fail' in the entry",
+            "assertTrue(support.BREAKS) keeps its message 'should fail' in the entry",
+            "assertTrue(support.BREAKS) did not keep its message 'should fail' in the entry",
         )
         support.check(
             self,
             result.passed,
             False,
-            "a step whose assertTrue(False) fails is reported as failed",
-            "a step whose assertTrue(False) fails is reported as passed",
+            "a step whose assertTrue(support.BREAKS) fails is reported as failed",
+            "a step whose assertTrue(support.BREAKS) fails is reported as passed",
         )
 
     def bud_abort_on_fail_raises(self):
-        """assertTrue(False, abort_on_fail=True) raises budtestlibrary's AssertionError with the entry text."""
+        """assertTrue(support.BREAKS, abort_on_fail=True) raises budtestlibrary's AssertionError with the entry text."""
         exc = support.raised(
             support.quiet(BareCase()).assertTrue, False, msg="fatal", abort_on_fail=True
         )
@@ -119,8 +119,8 @@ class Assertions(BudTestCase):
             self,
             type(exc),
             BudAssertionError,
-            "assertTrue(False, abort_on_fail=True) raises budtestlibrary's AssertionError",
-            "assertTrue(False, abort_on_fail=True) did not raise budtestlibrary's AssertionError",
+            "assertTrue(support.BREAKS, abort_on_fail=True) raises budtestlibrary's AssertionError",
+            "assertTrue(support.BREAKS, abort_on_fail=True) did not raise budtestlibrary's AssertionError",
         )
         support.check(
             self,
@@ -131,21 +131,21 @@ class Assertions(BudTestCase):
         )
 
     def bud_false_passes(self):
-        """assertFalse(False) records a passed AssertFalse entry."""
+        """assertFalse(support.BREAKS) records a passed AssertFalse entry."""
         self._one(
-            lambda tc: tc.assertFalse(False, msg="should pass"),
+            lambda tc: tc.assertFalse(support.BREAKS, msg="should pass"),
             True,
             "AssertFalse",
-            "assertFalse(False)",
+            "assertFalse(support.BREAKS)",
         )
 
     def bud_true_fails(self):
-        """assertFalse(True) records a failed AssertFalse entry."""
+        """assertFalse(support.HOLDS) records a failed AssertFalse entry."""
         self._one(
-            lambda tc: tc.assertFalse(True, msg="should fail"),
+            lambda tc: tc.assertFalse(support.HOLDS, msg="should fail"),
             False,
             "AssertFalse",
-            "assertFalse(True)",
+            "assertFalse(support.HOLDS)",
         )
 
     def bud_matching_values(self):

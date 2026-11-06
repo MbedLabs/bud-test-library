@@ -46,7 +46,7 @@ class AsyncSteps(BudTestCase):
             async def bud_check(self):
                 await asyncio.sleep(0)
                 self.assertEqual(1, 1, msg="equal")
-                self.assertTrue(False, msg="fails")
+                self.assertTrue(support.BREAKS, msg="fails")
 
         _, results = support.run(AsyncAssertTest())
         support.check(
@@ -112,7 +112,7 @@ class AsyncSteps(BudTestCase):
                 self.reached = False
 
             async def bud_abort(self):
-                self.assertTrue(False, msg="stop", abort_on_fail=True)
+                self.assertTrue(support.BREAKS, msg="stop", abort_on_fail=True)
                 self.reached = True
 
         case = AsyncAbortTest()

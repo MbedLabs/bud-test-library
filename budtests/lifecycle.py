@@ -112,7 +112,7 @@ class Lifecycle(BudTestCase):
 
         class FailingTest(BudTestCase):
             def bud_fail(self):
-                self.assertTrue(False, msg="deliberate fail")
+                self.assertTrue(support.BREAKS, msg="deliberate fail")
 
         support.check(
             self,
@@ -127,7 +127,7 @@ class Lifecycle(BudTestCase):
 
         class PassingTest(BudTestCase):
             def bud_pass(self):
-                self.assertTrue(True, msg="passes")
+                self.assertTrue(support.HOLDS, msg="passes")
 
         support.check(
             self,
@@ -186,8 +186,8 @@ class Lifecycle(BudTestCase):
 
         class ResultTest(BudTestCase):
             def bud_check(self):
-                self.assertTrue(True, msg="pass1")
-                self.assertTrue(True, msg="pass2")
+                self.assertTrue(support.HOLDS, msg="pass1")
+                self.assertTrue(support.HOLDS, msg="pass2")
 
         _, results = support.run(ResultTest())
         support.check(
@@ -217,8 +217,8 @@ class Lifecycle(BudTestCase):
 
         class FailResultTest(BudTestCase):
             def bud_mixed(self):
-                self.assertTrue(True, msg="pass")
-                self.assertTrue(False, msg="fail")
+                self.assertTrue(support.HOLDS, msg="pass")
+                self.assertTrue(support.BREAKS, msg="fail")
 
         _, results = support.run(FailResultTest())
         support.check(
@@ -255,9 +255,9 @@ class Lifecycle(BudTestCase):
 
             class DemoSummaryTest(BudTestCase):
                 def bud_mixed(self):
-                    self.assertTrue(True, msg="one")
+                    self.assertTrue(support.HOLDS, msg="one")
                     self.assertEqual(2, 2, msg="two")
-                    self.assertTrue(False, msg="three")
+                    self.assertTrue(support.BREAKS, msg="three")
                     self.skipAssert("four")
 
 

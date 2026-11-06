@@ -22,7 +22,7 @@ class Callsite(BudTestCase):
         class DirectTest(BudTestCase):
             def bud_direct(self):
                 lines.append(line_after())
-                self.assertTrue(True, msg="direct")
+                self.assertTrue(support.HOLDS, msg="direct")
 
         _, results = support.run(DirectTest())
         entry = results[0].assertions[0]
@@ -95,7 +95,7 @@ class Callsite(BudTestCase):
 
     def bud_passing_assertion_has_no_code_context_or_traceback(self):
         """A passing entry carries neither code context nor traceback."""
-        entry = support.step(lambda tc: tc.assertTrue(True, msg="passes")).assertions[0]
+        entry = support.step(lambda tc: tc.assertTrue(support.HOLDS, msg="passes")).assertions[0]
         support.check(
             self,
             entry.code_context,
@@ -116,15 +116,15 @@ class Callsite(BudTestCase):
 
         class FailTest(BudTestCase):
             def bud_fails(self):
-                self.assertTrue(False, msg="fails here")
+                self.assertTrue(support.BREAKS, msg="fails here")
 
         _, results = support.run(FailTest())
         entry = results[0].assertions[0]
         support.check_in(
             self,
-            'self.assertTrue(False, msg="fails here")',
+            'self.assertTrue(support.BREAKS, msg="fails here")',
             entry.code_context or "",
-            'the failed entry\'s code context holds the calling line self.assertTrue(False, msg="fails here")',
+            'the failed entry\'s code context holds the calling line self.assertTrue(support.BREAKS, msg="fails here")',
             "the failed entry's code context does not hold the calling line",
         )
         support.check_in(
@@ -145,7 +145,7 @@ class Callsite(BudTestCase):
     def bud_source_path_off_disables_frame_inspection(self):
         """CAPTURE_SOURCE_PATH=False: no file, line, function or code context; the traceback is kept."""
         entry = support.step(
-            lambda tc: tc.assertTrue(False, msg="fails"), CAPTURE_SOURCE_PATH=False
+            lambda tc: tc.assertTrue(support.BREAKS, msg="fails"), CAPTURE_SOURCE_PATH=False
         ).assertions[0]
         support.check(
             self,
@@ -186,7 +186,7 @@ class Callsite(BudTestCase):
     def bud_traceback_off_keeps_code_context(self):
         """CAPTURE_TRACEBACK=False: no traceback; the code context is kept."""
         entry = support.step(
-            lambda tc: tc.assertTrue(False, msg="fails"), CAPTURE_TRACEBACK=False
+            lambda tc: tc.assertTrue(support.BREAKS, msg="fails"), CAPTURE_TRACEBACK=False
         ).assertions[0]
         support.check(
             self,
@@ -210,8 +210,8 @@ class Callsite(BudTestCase):
             raise RuntimeError("inspect.stack called")
 
         def body(tc):
-            tc.assertTrue(True)
-            tc.assertTrue(False)
+            tc.assertTrue(support.HOLDS)
+            tc.assertTrue(support.BREAKS)
 
         saved = inspect.stack
         inspect.stack = forbidden

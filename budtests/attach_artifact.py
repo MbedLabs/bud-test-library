@@ -75,7 +75,7 @@ class AttachArtifact(BudTestCase):
 
         class PlainTest(BudTestCase):
             def bud_plain(self):
-                self.assertTrue(True)
+                self.assertTrue(support.HOLDS)
 
         _, results = support.run(PlainTest())
         support.check_not_in(
@@ -312,7 +312,7 @@ class AttachArtifact(BudTestCase):
                 self.attach_artifact(missing)
 
             def bud_step(self):
-                self.assertTrue(True)
+                self.assertTrue(support.HOLDS)
 
         _, results, console = support.run_capturing(TearDownMissing(), logging.INFO)
         result = results[0]

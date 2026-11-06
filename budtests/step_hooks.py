@@ -31,7 +31,7 @@ class HookedTest(BudTestCase):
 
     def bud_one(self):
         self.calls.append("bud_one")
-        self.assertTrue(True, msg="one")
+        self.assertTrue(support.HOLDS, msg="one")
 
     def bud_two(self):
         self.calls.append("bud_two")
@@ -263,13 +263,13 @@ class StepHooks(BudTestCase):
 
         class AssertingHooks(BudTestCase):
             def setUp(self):
-                self.assertTrue(True, msg="in setUp")
+                self.assertTrue(support.HOLDS, msg="in setUp")
 
             def tearDown(self):
-                self.assertTrue(True, msg="in tearDown")
+                self.assertTrue(support.HOLDS, msg="in tearDown")
 
             def bud_step(self):
-                self.assertTrue(True, msg="step")
+                self.assertTrue(support.HOLDS, msg="step")
 
         _, results = support.run(AssertingHooks())
         support.check(
@@ -285,11 +285,11 @@ class StepHooks(BudTestCase):
 
         class FailingTearDownAssert(BudTestCase):
             def tearDown(self):
-                self.assertTrue(False, msg="soft")
-                self.assertTrue(False, msg="hard", abort_on_fail=True)
+                self.assertTrue(support.BREAKS, msg="soft")
+                self.assertTrue(support.BREAKS, msg="hard", abort_on_fail=True)
 
             def bud_step(self):
-                self.assertTrue(True, msg="step")
+                self.assertTrue(support.HOLDS, msg="step")
 
         _, results = support.run(FailingTearDownAssert())
         result = results[0]
@@ -320,10 +320,10 @@ class StepHooks(BudTestCase):
 
         class SoftSetUpAssert(BudTestCase):
             def setUp(self):
-                self.assertTrue(False, msg="soft in setUp")
+                self.assertTrue(support.BREAKS, msg="soft in setUp")
 
             def bud_step(self):
-                self.assertTrue(True, msg="step")
+                self.assertTrue(support.HOLDS, msg="step")
 
         _, results, console = support.run_capturing(SoftSetUpAssert(), logging.INFO)
         result = results[0]
@@ -361,10 +361,10 @@ class StepHooks(BudTestCase):
 
         class FailingSetUpAssert(BudTestCase):
             def setUp(self):
-                self.assertTrue(False, msg="device present", abort_on_fail=True)
+                self.assertTrue(support.BREAKS, msg="device present", abort_on_fail=True)
 
             def bud_step(self):
-                self.assertTrue(True, msg="step")
+                self.assertTrue(support.HOLDS, msg="step")
 
         _, results = support.run(FailingSetUpAssert())
         result = results[0]

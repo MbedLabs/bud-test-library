@@ -25,7 +25,7 @@ CHILD_SUITE = """
 
     class DemoConsoleTest(BudTestCase):
         def bud_check(self):
-            self.assertTrue(True, msg="console check")
+            self.assertTrue(support.HOLDS, msg="console check")
 
 
     DemoConsoleTest().run()
@@ -43,7 +43,7 @@ class Passing(BudTestCase):
     """Inner case with one passing step."""
 
     def bud_check(self):
-        self.assertTrue(True, msg="ok")
+        self.assertTrue(support.HOLDS, msg="ok")
 
 
 class LoggingIsolation(BudTestCase):
@@ -80,7 +80,7 @@ class LoggingIsolation(BudTestCase):
 
         class LoggerNameTest(BudTestCase):
             def bud_check(self):
-                self.assertTrue(True, msg="ok")
+                self.assertTrue(support.HOLDS, msg="ok")
 
         logging.getLogger("budtestlibrary.LoggerNameTest").handlers.clear()
         support.run(LoggerNameTest())
@@ -97,7 +97,7 @@ class LoggingIsolation(BudTestCase):
 
         class HandlerTest(BudTestCase):
             def bud_check(self):
-                self.assertTrue(True, msg="ok")
+                self.assertTrue(support.HOLDS, msg="ok")
 
         support.run(HandlerTest(), logging.INFO)
         handlers = logging.getLogger("budtestlibrary.HandlerTest").handlers
@@ -114,7 +114,7 @@ class LoggingIsolation(BudTestCase):
 
         class PropagationTest(BudTestCase):
             def bud_check(self):
-                self.assertTrue(True, msg="ok")
+                self.assertTrue(support.HOLDS, msg="ok")
 
         support.run(PropagationTest(), logging.INFO)
         support.check(
@@ -212,7 +212,7 @@ class LoggingIsolation(BudTestCase):
 
         class EncodingTest(BudTestCase):
             def bud_check(self):
-                self.assertTrue(True, msg="ok")
+                self.assertTrue(support.HOLDS, msg="ok")
 
         support.run(EncodingTest())
         handlers = logging.getLogger("budtestlibrary.EncodingTest").handlers

@@ -24,6 +24,8 @@ from budtestlibrary import BudTestCase
 SUITES = Path(__file__).resolve().parent
 REPO = SUITES.parent
 PYTHON = sys.executable
+HOLDS = True
+BREAKS = False
 
 
 def work_dir(name: str) -> Path:

@@ -17,7 +17,7 @@ class ConfigurableCapture(BudTestCase):
         class SourceTest(BudTestCase):
             def bud_check(self):
                 lines.append(inspect.currentframe().f_lineno + 1)
-                self.assertTrue(True, msg="captured")
+                self.assertTrue(support.HOLDS, msg="captured")
 
         _, results = support.run(SourceTest())
         entry = results[0].assertions[0]
@@ -46,7 +46,7 @@ class ConfigurableCapture(BudTestCase):
     def bud_source_suppressed_when_capture_disabled(self):
         """With CAPTURE_SOURCE_PATH = False the three source fields are None."""
         entry = support.step(
-            lambda tc: tc.assertTrue(True, msg="not captured"), CAPTURE_SOURCE_PATH=False
+            lambda tc: tc.assertTrue(support.HOLDS, msg="not captured"), CAPTURE_SOURCE_PATH=False
         ).assertions[0]
         support.check(
             self,
@@ -59,7 +59,9 @@ class ConfigurableCapture(BudTestCase):
     def bud_source_keys_are_none_in_dict_when_capture_disabled(self):
         """With CAPTURE_SOURCE_PATH = False, to_dict() has the three source keys with value None."""
         d = (
-            support.step(lambda tc: tc.assertTrue(True, msg="no source"), CAPTURE_SOURCE_PATH=False)
+            support.step(
+                lambda tc: tc.assertTrue(support.HOLDS, msg="no source"), CAPTURE_SOURCE_PATH=False
+            )
             .assertions[0]
             .to_dict()
         )

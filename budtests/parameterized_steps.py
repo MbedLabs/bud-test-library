@@ -24,7 +24,7 @@ class ParameterizedSteps(BudTestCase):
             @parameterized(["1.8V", "3.3V", "5V"])
             def bud_test_voltage(self, rail):
                 seen.append(rail)
-                self.assertTrue(True, msg=f"rail {rail}")
+                self.assertTrue(support.HOLDS, msg=f"rail {rail}")
 
         _, results = support.run(VoltageTest())
         support.check(
