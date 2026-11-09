@@ -36,10 +36,10 @@ jobs:
         run: uv sync --frozen --no-build --no-build-isolation --no-binary-package budtestlibrary --extra dev --group build --group ci
 
       - name: Black format check
-        run: .venv/bin/black --check budtestlibrary budtests
+        run: .venv/bin/black --check budtestlibrary tests
 
       - name: Ruff lint
-        run: .venv/bin/ruff check budtestlibrary budtests
+        run: .venv/bin/ruff check budtestlibrary tests
 
       - name: Run bandit security scan
         run: .venv/bin/bandit -r budtestlibrary/ -ll
@@ -100,7 +100,7 @@ jobs:
         env:
           PACKAGE_ORG: ${{ vars.PACKAGE_ORG }}
           ORG_MAINTAINER: ${{ secrets.ORG_MAINTAINER }}
-        run: .venv/bin/python -c "import importlib, sys; sys.path.insert(0, 'budtests'); module, name = sys.argv[1].rsplit('.', 1); raise SystemExit(0 if getattr(importlib.import_module(module), name)().run() else 1)" ${{ matrix.suite }}
+        run: .venv/bin/python -c "import importlib, sys; module, name = sys.argv[1].rsplit('.', 1); raise SystemExit(0 if getattr(importlib.import_module('tests.logic.' + module), name)().run() else 1)" ${{ matrix.suite }}
 
   build:
     needs: [quality, suite]

@@ -1,9 +1,8 @@
 """require(): the AssertRequire entry, the raised AssertionError, metadata from keyword arguments, and a failed requirement that stops only its step."""
 
-import support
-
 from budtestlibrary import BudTestCase
 from budtestlibrary.budtestcase import AssertionError as BudAssertionError
+from tests import support
 
 
 class Require(BudTestCase):

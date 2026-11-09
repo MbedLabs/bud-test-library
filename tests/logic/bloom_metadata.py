@@ -1,8 +1,7 @@
 """BloomMetaData: the full test case id, URLs, to_dict(), the optional description and the validation of project and suffix."""
 
-import support
-
 from budtestlibrary import BloomMetaData, BudTestCase, parameterized
+from tests import support
 
 BAD_SUFFIXES = {
     "hashes": "##invalid##",

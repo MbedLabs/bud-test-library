@@ -4,10 +4,9 @@ import io
 import logging
 import re
 
-import support
-
 from budtestlibrary import BudTestCase, parameterized
 from budtestlibrary.budtestcase import Utf8StreamHandler
+from tests import support
 
 TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (UTC[+-]\d{1,2}(?::\d{2})?) - ")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
@@ -181,7 +180,7 @@ class LoggingIsolation(BudTestCase):
         """Utf8StreamHandler writes the plain text to a UTF-8 stream and to a text-only stream."""
         utf8 = io.TextIOWrapper(io.BytesIO(), encoding="utf-8", newline="\n")
         text_only = io.StringIO()
-        logger = logging.getLogger("budtests.utf8_streams")
+        logger = logging.getLogger("tests.utf8_streams")
         logger.propagate = False
         handlers = [Utf8StreamHandler(utf8), Utf8StreamHandler(text_only)]
         for handler in handlers:

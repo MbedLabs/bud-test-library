@@ -2,9 +2,8 @@
 
 import asyncio
 
-import support
-
 from budtestlibrary import BudTestCase, parameterized
+from tests import support
 
 
 class AsyncSteps(BudTestCase):

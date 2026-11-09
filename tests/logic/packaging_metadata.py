@@ -3,11 +3,11 @@
 import os
 import re
 
-import support
 import tomllib
 
 import budtestlibrary
 from budtestlibrary import BudTestCase
+from tests import support
 
 ORG = os.environ.get("PACKAGE_ORG", "")
 MAINTAINER = os.environ.get("ORG_MAINTAINER", "")
