@@ -4,9 +4,6 @@ All notable changes to `budtestlibrary` will be documented in this file.
 
 ## [1.3.0] - unreleased
 
-### Added
-- `python -m budtestlibrary run <path>` (and `budtestlibrary run`) runs every `BudTestCase` class the modules of a folder, or one file, define, in one process. Modules are imported by their dotted name from the current directory; files whose name starts with `_` are skipped and `--pattern` keeps only the matching files. It prints a summary naming each failed suite and each module that could not be imported, and exits 0 when all passed, 1 when one failed, a module could not be imported or no suite was found, and 2 when the path does not exist.
-
 ### Changed
 - Python 3.11 or later is required; Python 3.9 and 3.10 are no longer supported.
 - Console log timestamps end in the numeric UTC offset (`+0100`) instead of the time zone name. On Windows the name is spelled out in the system language, such as `Mitteleuropäische Zeit`, and showed up garbled in CI logs.
