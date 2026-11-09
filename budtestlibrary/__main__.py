@@ -1,4 +1,5 @@
-"""Command line entry point: ``python -m budtestlibrary check <path>``."""
+"""Command line entry point: ``python -m budtestlibrary check <path>`` and
+``python -m budtestlibrary run <path>``."""
 
 from __future__ import annotations
 
@@ -7,6 +8,7 @@ import json
 import sys
 from pathlib import Path
 
+from budtestlibrary import runner
 from budtestlibrary.traceability import TraceabilityReport, collect
 
 
@@ -57,11 +59,27 @@ def main(argv: list[str] | None = None) -> int:
         help="Also fail when a test class claims no Bloom test case.",
     )
 
+    run = subcommands.add_parser(
+        "run",
+        help="Run every BudTestCase suite of a file or folder; exit 1 when one fails.",
+    )
+    run.add_argument("path", type=Path, help="Test file or directory to run.")
+    run.add_argument(
+        "--pattern",
+        default="*.py",
+        help="File name pattern of the suites in a directory (default: *.py).",
+    )
+
     args = parser.parse_args(argv)
 
     if not args.path.exists():
         print(f"✗ {args.path} does not exist", file=sys.stderr)
         return 2
+
+    if args.command == "run":
+        result = runner.run(args.path, args.pattern)
+        print(runner.render(result, args.path))
+        return 0 if result.ok else 1
 
     report = collect(args.path)
 

@@ -117,6 +117,29 @@ pipeline, and `--strict` also fails when a test class claims no Bloom test case.
 The command talks to nothing. It cannot tell whether `PRJ-TC-001` exists in Bloom,
 because this library holds no Bloom address and no credential.
 
+### Running the suites of a folder
+
+```bash
+python -m budtestlibrary run tests/logic
+python -m budtestlibrary run tests/api --pattern "PRJ_*.py"
+```
+
+`run` imports each module of the folder by its dotted name from the current
+directory, so suites import their neighbours as they do in the project, and runs
+every `BudTestCase` class each module defines, all in one process. Files whose
+name starts with `_` are skipped; `--pattern` keeps only the files that match it,
+which leaves out modules holding shared base classes. A file path runs that file
+alone. The run prints each suite's log, then a summary naming every suite that
+failed and every module that could not be imported:
+
+```
+2 suite(s) ran in tests/logic, 1 failed
+FAILED tests.logic.thermal.ThermalSoakTest
+```
+
+It exits 0 when every suite passed, 1 when one failed, a module could not be
+imported or no suite was found, and 2 when the path does not exist.
+
 ## Public API
 
 | Export | Purpose |
@@ -130,6 +153,7 @@ because this library holds no Bloom address and no credential.
 | `BudConfig` | Configuration loaded from environment and properties |
 | `get_default_config()` | Shared lazy-loaded configuration instance |
 | `budtestlibrary check` | Command that reports the Bloom test cases a suite claims |
+| `budtestlibrary run` | Command that runs every suite of a folder or file and fails when one fails |
 
 ## Test structure
 
