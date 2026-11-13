@@ -72,7 +72,7 @@ jobs:
         run: uv sync --frozen --no-build --no-build-isolation --no-binary-package budtestlibrary --extra dev --group build --group ci
 
       - name: Install bud-runner beside this budtestlibrary
-        run: uv pip install --python .venv/bin/python bud-runner==1.2.0
+        run: uv pip install --no-build --python .venv/bin/python bud-runner==1.2.0
 
       - name: Run the tests in tests/logic
         env:
