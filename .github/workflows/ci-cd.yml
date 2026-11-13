@@ -48,33 +48,8 @@ jobs:
         run: .venv/bin/pip-audit
 
   suite:
-    name: suite ${{ matrix.suite }}
+    name: Run the tests in tests/logic
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        suite:
-          - async_steps.AsyncSteps
-          - assert_raises.AssertRaises
-          - attach_artifact.AttachArtifact
-          - assertions.Assertions
-          - callsite.Callsite
-          - bloom_metadata.BloomMetadata
-          - configurable_capture.ConfigurableCapture
-          - bundled_examples.BundledExamples
-          - configuration.Configuration
-          - lifecycle.Lifecycle
-          - execution_order.ExecutionOrder
-          - flash_event.FlashEvents
-          - log_format.LogFormat
-          - packaging_metadata.PackagingMetadata
-          - parameterized_steps.ParameterizedSteps
-          - logging_isolation.LoggingIsolation
-          - require.Require
-          - step_hooks.StepHooks
-          - result_schemas.ResultSchemas
-          - traceability.Traceability
-          - wait_until.WaitUntil
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -96,11 +71,15 @@ jobs:
       - name: Install dev dependencies and security scanners
         run: uv sync --frozen --no-build --no-build-isolation --no-binary-package budtestlibrary --extra dev --group build --group ci
 
-      - name: Run suite
+      - name: Install bud-runner beside this budtestlibrary
+        run: uv pip install --python .venv/bin/python bud-runner==1.2.0
+
+      - name: Run the tests in tests/logic
         env:
+          PYTHONPATH: ${{ github.workspace }}
           PACKAGE_ORG: ${{ vars.PACKAGE_ORG }}
           ORG_MAINTAINER: ${{ secrets.ORG_MAINTAINER }}
-        run: .venv/bin/python -c "import importlib, sys; module, name = sys.argv[1].rsplit('.', 1); raise SystemExit(0 if getattr(importlib.import_module('tests.logic.' + module), name)().run() else 1)" ${{ matrix.suite }}
+        run: .venv/bin/bud-runner run-tests -t tests.logic.SUITES --no-upload -o "$RUNNER_TEMP/tests-logic-junit.xml"
 
   build:
     needs: [quality, suite]
