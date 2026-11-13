@@ -1,9 +1,8 @@
 """The assertion methods: the entry each records (type, passed, skipped, message, expected, actual), boundaries, tolerance, range, regex, skip, and bad containers."""
 
-import support
-
 from budtestlibrary import BudTestCase, parameterized
 from budtestlibrary.budtestcase import AssertionError as BudAssertionError
+from tests import support
 
 RECORDED_VALUES = {
     "assertEqual(None, None)": ("assertEqual", None, None, True, None, None),

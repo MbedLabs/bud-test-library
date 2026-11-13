@@ -2,10 +2,9 @@
 
 import inspect
 
-import support
-
 from budtestlibrary import BudTestCase
 from budtestlibrary.budtestcase import AssertionError as BudAssertionError
+from tests import support
 
 
 def true_after(calls: int):

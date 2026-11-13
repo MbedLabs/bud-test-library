@@ -5,10 +5,9 @@ import sys
 import textwrap
 from pathlib import Path
 
-import support
-
 from budtestlibrary import BudTestCase
 from budtestlibrary.traceability import collect
+from tests import support
 
 TRACED = textwrap.dedent("""
     from budtestlibrary import BloomMetaData, BudTestCase
