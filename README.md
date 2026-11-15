@@ -393,6 +393,7 @@ python -c "import budtestlibrary.examples, pathlib; print(pathlib.Path(budtestli
 
 | `budtestlibrary` | Intended `bud_runner` pairing | Notes |
 |---|---|---|
+| `1.3.0` | `1.3.0` | Console log timestamps with a numeric UTC offset; UTF-8 console output on Windows CI; Python 3.11+ |
 | `1.2.0` | `1.2.0` | Per-step `setUp()`/`tearDown()`, `attach_artifact`, `@parameterized`, `waitUntil`, `require`, `assertRaises`, `async def` steps, declaration-order steps |
 | `1.1.0` | `1.1.0` | Updated compatibility matrix |
 | `1.0.3` | `1.0.3` | Optional `addr` target address on `FlashEvent.flash()` and `FlashEvent.execute()` |

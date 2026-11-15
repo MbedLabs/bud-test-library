@@ -2,7 +2,7 @@
 
 All notable changes to `budtestlibrary` will be documented in this file.
 
-## [1.3.0] - unreleased
+## [1.3.0] - 2026-11-15
 
 ### Changed
 - Python 3.11 or later is required; Python 3.9 and 3.10 are no longer supported.
