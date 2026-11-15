@@ -2,9 +2,8 @@
 
 import inspect
 
-import support
-
 from budtestlibrary import BudTestCase
+from tests import support
 
 
 class ConfigurableCapture(BudTestCase):

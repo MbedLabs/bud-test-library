@@ -2,9 +2,8 @@
 
 import inspect
 
-import support
-
 from budtestlibrary import BudTestCase
+from tests import support
 
 
 def line_after() -> int:

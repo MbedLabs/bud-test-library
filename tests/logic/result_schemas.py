@@ -3,10 +3,9 @@
 import re
 from datetime import datetime
 
-import support
-
 from budtestlibrary import BudTestCase
 from budtestlibrary.budtestcase import TestMethodResult, TestResult
+from tests import support
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 

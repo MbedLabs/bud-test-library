@@ -1,0 +1,25 @@
+"""The budtestlibrary suites of tests/logic, as bud-runner run-tests -t tests.logic.SUITES runs them."""
+
+SUITES = [
+    "tests.logic.assert_raises.AssertRaises",
+    "tests.logic.assertions.Assertions",
+    "tests.logic.async_steps.AsyncSteps",
+    "tests.logic.attach_artifact.AttachArtifact",
+    "tests.logic.bloom_metadata.BloomMetadata",
+    "tests.logic.bundled_examples.BundledExamples",
+    "tests.logic.callsite.Callsite",
+    "tests.logic.configurable_capture.ConfigurableCapture",
+    "tests.logic.configuration.Configuration",
+    "tests.logic.execution_order.ExecutionOrder",
+    "tests.logic.flash_event.FlashEvents",
+    "tests.logic.lifecycle.Lifecycle",
+    "tests.logic.log_format.LogFormat",
+    "tests.logic.logging_isolation.LoggingIsolation",
+    "tests.logic.packaging_metadata.PackagingMetadata",
+    "tests.logic.parameterized_steps.ParameterizedSteps",
+    "tests.logic.require.Require",
+    "tests.logic.result_schemas.ResultSchemas",
+    "tests.logic.step_hooks.StepHooks",
+    "tests.logic.traceability.Traceability",
+    "tests.logic.wait_until.WaitUntil",
+]

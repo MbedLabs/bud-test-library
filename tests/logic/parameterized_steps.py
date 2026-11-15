@@ -2,10 +2,9 @@
 
 import logging
 
-import support
-
 from budtestlibrary import BudTestCase, parameterized
 from budtestlibrary.budtestcase import MAX_STEP_NAME_LENGTH
+from tests import support
 
 
 def names(results) -> list[str]:

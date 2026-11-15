@@ -1,8 +1,7 @@
 """Step order: declaration order, not alphabetical, numeric prefixes, helpers between steps, inherited steps, overrides and several levels of inheritance."""
 
-import support
-
 from budtestlibrary import BudTestCase
+from tests import support
 
 
 def run_order(cls) -> list[str]:

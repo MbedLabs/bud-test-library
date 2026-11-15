@@ -1,8 +1,7 @@
 """FlashSuccess, FlashFailure and FlashEvent.execute(): messages, to_dict(), the required failure message, timing, wrapped exceptions, the optional addr argument and the info and result getters."""
 
-import support
-
 from budtestlibrary import BudTestCase, FlashEvent, FlashFailure, FlashSuccess, parameterized
+from tests import support
 
 
 class DemoEvent(FlashEvent):

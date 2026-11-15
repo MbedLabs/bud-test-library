@@ -4,10 +4,9 @@ import importlib
 import inspect
 from pathlib import Path
 
-import support
-
 import budtestlibrary.examples
 from budtestlibrary import BudTestCase, parameterized
+from tests import support
 
 EXPECTED_EXAMPLE_MODULES = [
     "minimal_test",

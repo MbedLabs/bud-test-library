@@ -4,10 +4,9 @@ import asyncio
 import inspect
 import sys
 
-import support
-
 from budtestlibrary import BudTestCase, parameterized
 from budtestlibrary.budtestcase import AssertionError as BudAssertionError
+from tests import support
 
 PASS_THROUGH = {
     "KeyboardInterrupt": KeyboardInterrupt,

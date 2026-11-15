@@ -2,9 +2,8 @@
 
 import re
 
-import support
-
 from budtestlibrary import BudTestCase
+from tests import support
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC[+-]\d{1,2}(?::\d{2})? - ")

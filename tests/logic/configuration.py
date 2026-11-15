@@ -3,9 +3,8 @@
 import logging
 import os
 
-import support
-
 from budtestlibrary import BudConfig, BudTestCase, get_default_config
+from tests import support
 
 
 class Records(logging.Handler):

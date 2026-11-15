@@ -3,9 +3,8 @@
 import logging
 import os
 
-import support
-
 from budtestlibrary import BudTestCase
+from tests import support
 
 
 class AttachArtifact(BudTestCase):

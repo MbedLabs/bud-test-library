@@ -3,9 +3,8 @@
 import logging
 import re
 
-import support
-
 from budtestlibrary import BudTestCase
+from tests import support
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
