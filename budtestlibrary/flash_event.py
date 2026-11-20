@@ -32,7 +32,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 _UNSET = object()  # Sentinel for required-but-defaulted fields
 
@@ -51,7 +51,7 @@ class FlashResult:
     """Base class for flash operation results."""
 
     timestamp: datetime = field(default_factory=datetime.now)
-    duration_seconds: Optional[float] = None
+    duration_seconds: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def is_success(self) -> bool:
@@ -101,17 +101,17 @@ class FlashFailure(FlashResult):
     """
 
     message: str = field(default=_UNSET)
-    error_code: Optional[int] = None
+    error_code: int | None = None
     recoverable: bool = True
 
     def __init__(
         self,
         message: str,
-        error_code: Optional[int] = None,
+        error_code: int | None = None,
         recoverable: bool = True,
-        timestamp: Optional[datetime] = None,
-        duration_seconds: Optional[float] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        timestamp: datetime | None = None,
+        duration_seconds: float | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         self.timestamp = timestamp if timestamp is not None else datetime.now()
         self.duration_seconds = duration_seconds
@@ -162,12 +162,12 @@ class FlashEvent(ABC):
 
     def __init__(self):
         """Initialize the flash event."""
-        self._start_time: Optional[datetime] = None
-        self._end_time: Optional[datetime] = None
-        self._result: Optional[FlashResult] = None
+        self._start_time: datetime | None = None
+        self._end_time: datetime | None = None
+        self._result: FlashResult | None = None
 
     @abstractmethod
-    def flash(self, firmware_path: str, addr: Optional[int] = None) -> FlashResult:
+    def flash(self, firmware_path: str, addr: int | None = None) -> FlashResult:
         """
         Perform the firmware flash operation.
 
@@ -243,7 +243,7 @@ class FlashEvent(ABC):
         """
         pass
 
-    def execute(self, firmware_path: str, addr: Optional[int] = None) -> FlashResult:
+    def execute(self, firmware_path: str, addr: int | None = None) -> FlashResult:
         """
         Execute the flash operation with timing.
 
@@ -297,11 +297,11 @@ class FlashEvent(ABC):
             "release": self.get_release(),
         }
 
-    def get_result(self) -> Optional[FlashResult]:
+    def get_result(self) -> FlashResult | None:
         """Get the result of the last flash operation."""
         return self._result
 
-    def get_duration(self) -> Optional[float]:
+    def get_duration(self) -> float | None:
         """Get the duration of the last flash operation in seconds."""
         if self._start_time and self._end_time:
             return (self._end_time - self._start_time).total_seconds()

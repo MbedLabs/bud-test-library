@@ -4,7 +4,7 @@ BloomMetadata - Direct linkage to Bloom PLM Test Cases (*-TC-*).
 
 import re
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 _TC_ID_SUFFIX_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 
@@ -18,7 +18,7 @@ class BloomMetaData:
 
     project: str
     tc_id_suffix: str
-    description: Optional[str] = None
+    description: str | None = None
 
     def __post_init__(self):
         if not self.project or not self.project.strip():

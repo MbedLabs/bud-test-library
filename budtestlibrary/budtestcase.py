@@ -18,12 +18,12 @@ import sys
 import time
 import traceback
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import FrameType
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 from budtestlibrary.config import BudConfig
 
@@ -111,7 +111,7 @@ class Utf8StreamHandler(logging.StreamHandler):
             self.handleError(record)
 
 
-def _is_utf8(encoding: Optional[str]) -> bool:
+def _is_utf8(encoding: str | None) -> bool:
     """Return whether the encoding name resolves to the UTF-8 codec."""
     if not encoding:
         return False
@@ -132,11 +132,11 @@ class TestResult:
     expected: Any = None
     actual: Any = None
     result: Any = None
-    source_file: Optional[str] = None
-    source_line: Optional[int] = None
-    source_function: Optional[str] = None
-    code_context: Optional[str] = None
-    traceback: Optional[str] = None
+    source_file: str | None = None
+    source_line: int | None = None
+    source_function: str | None = None
+    code_context: str | None = None
+    traceback: str | None = None
     timestamp: datetime = field(default_factory=datetime.now)
     metadata: dict[str, Any] = field(default_factory=dict)
     max_result_value_length: int = _DEFAULT_MAX_RESULT_VALUE_LENGTH
@@ -182,9 +182,9 @@ class TestMethodResult:
     skipped: bool = False
     assertions: list[TestResult] = field(default_factory=list)
     duration_seconds: float = 0.0
-    error_message: Optional[str] = None
+    error_message: str | None = None
     summary_message: str = ""
-    traceback: Optional[str] = None
+    traceback: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -226,7 +226,7 @@ class _AssertRaisesContext:
     def __enter__(self) -> "_AssertRaisesContext":
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_value: Any, exc_tb: Any) -> bool:
+    def __exit__(self, exc_type: type | None, exc_value: Any, exc_tb: Any) -> bool:
         if exc_type is None:
             raised = False
             actual = "no exception raised"
@@ -358,9 +358,9 @@ class BudTestCase(ABC):  # noqa: B024
         self._current_assertions: list[TestResult] = []
         self._uploaded_files: list[str] = []
         self._current_artifacts: list[dict[str, str]] = []
-        self._start_time: Optional[datetime] = None
-        self._end_time: Optional[datetime] = None
-        self._console_handler: Optional[logging.Handler] = None
+        self._start_time: datetime | None = None
+        self._end_time: datetime | None = None
+        self._console_handler: logging.Handler | None = None
 
     # ==================== Lifecycle Methods ====================
 
@@ -671,7 +671,7 @@ class BudTestCase(ABC):  # noqa: B024
         """
         callsite: dict[str, Any] = {}
         if self.CAPTURE_SOURCE_PATH:
-            frame: Optional[FrameType] = sys._getframe(1)
+            frame: FrameType | None = sys._getframe(1)
             selected = None
             while frame is not None:
                 if not _is_library_file(frame.f_code.co_filename):
@@ -769,8 +769,8 @@ class BudTestCase(ABC):  # noqa: B024
         self,
         actual: float,
         expected: float,
-        absolute_tolerance: Optional[float] = None,
-        relative_tolerance: Optional[float] = None,
+        absolute_tolerance: float | None = None,
+        relative_tolerance: float | None = None,
         msg: str = "",
         abort_on_fail: bool = False,
         **kwargs,
@@ -796,7 +796,7 @@ class BudTestCase(ABC):  # noqa: B024
         self,
         actual: float,
         lower_bound: float,
-        upper_bound: Optional[float] = None,
+        upper_bound: float | None = None,
         include_bounds: bool = True,
         msg: str = "",
         abort_on_fail: bool = False,
@@ -922,7 +922,7 @@ class BudTestCase(ABC):  # noqa: B024
             **kwargs,
         )
 
-    def attach_artifact(self, path: Union[str, Path], name: Optional[str] = None) -> None:
+    def attach_artifact(self, path: str | Path, name: str | None = None) -> None:
         """Record an existing file as an artifact of the current step.
 
         The absolute path and the name, the file name by default, are added to
@@ -957,7 +957,7 @@ class BudTestCase(ABC):  # noqa: B024
         as last_exception.
         """
         start = time.monotonic()
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
         while True:
             try:
                 met = bool(condition_fn())

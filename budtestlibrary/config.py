@@ -17,7 +17,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 _logger = logging.getLogger(__name__)
 
@@ -41,24 +41,24 @@ class BudConfig:
     # Backend configuration
     backend_url: str = ""
     frontend_url: str = ""
-    bud_token: Optional[str] = None
+    bud_token: str | None = None
 
     # Runner configuration
-    runner_account: Optional[str] = None
-    runner_token: Optional[str] = None
+    runner_account: str | None = None
+    runner_token: str | None = None
     runner_socket_port: int = 53035
     runner_timeout: int = -1
 
     # GitHub/GitLab configuration
-    config_project_api_url: Optional[str] = None
-    config_project_repo: Optional[str] = None
-    config_token: Optional[str] = None
+    config_project_api_url: str | None = None
+    config_project_repo: str | None = None
+    config_token: str | None = None
     config_branch: str = "main"
     config_file: str = "bud_config.json"
     config_folder: str = "git-config"
 
     # User configuration
-    last_user: Optional[str] = None
+    last_user: str | None = None
     location: str = "EmbedLabs - Test Environment"
     language: str = "en"
 
@@ -67,7 +67,7 @@ class BudConfig:
     test_image_height: float = 500.0
 
     # Internal
-    _properties_file: Optional[str] = field(default=None, repr=False)
+    _properties_file: str | None = field(default=None, repr=False)
 
     def __post_init__(self):
         """Load configuration from files and environment."""
@@ -199,7 +199,7 @@ class BudConfig:
         return self.api_base_url + "runners"
 
 
-_default_config: Optional[BudConfig] = None
+_default_config: BudConfig | None = None
 
 
 def get_default_config() -> BudConfig:
